@@ -148,11 +148,12 @@ function FluidBackground() {
 function Navbar({ navRef }: { navRef: React.RefObject<HTMLElement | null> }) {
   const bodyFont = "'Inter', sans-serif";
   const headingFont = "'Inter', sans-serif";
+  const [menuOpen, setMenuOpen] = React.useState(false);
 
   return (
     <div className="fixed top-0 left-0 w-full flex justify-center pointer-events-none" style={{ zIndex: 50 }}>
       <nav ref={navRef} style={{ opacity: 0, fontFamily: bodyFont }}
-        className="relative mt-5 w-[94%] max-w-6xl flex items-center justify-between px-6 py-3 pointer-events-auto">
+        className="relative mt-5 w-[94%] max-w-6xl flex flex-col items-center px-6 py-3 pointer-events-auto">
         <div className="flex items-center justify-between w-full"
           style={{ borderRadius: 9999, padding: "10px 24px",
             background: "rgba(30,34,38,0.65)", backdropFilter: "blur(20px) saturate(1.3)",
@@ -168,7 +169,7 @@ function Navbar({ navRef }: { navRef: React.RefObject<HTMLElement | null> }) {
             <span className="text-lg font-bold" style={{ color: "#e5e2e1", fontFamily: headingFont }}>Dish360</span>
           </a>
 
-          {/* Links */}
+          {/* Desktop Links */}
           <div className="hidden md:flex items-center gap-8 text-sm"
             style={{ color: "rgba(229,226,225,0.7)", fontFamily: bodyFont }}>
             {["Gallery", "AR Kitchen", "Recipes", "Pricing"].map(l => (
@@ -187,6 +188,36 @@ function Navbar({ navRef }: { navRef: React.RefObject<HTMLElement | null> }) {
               onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(143,180,149,0.25)"; }}>
               Book Demo
             </button>
+
+            {/* Hamburger — visible below md */}
+            <button className="md:hidden flex flex-col gap-[5px] p-1.5" onClick={() => setMenuOpen(o => !o)}
+              aria-label="Toggle menu">
+              <span className="block w-5 h-[2px] rounded-full transition-all duration-300"
+                style={{ background: "#e5e2e1", transform: menuOpen ? "rotate(45deg) translateY(7px)" : "none" }} />
+              <span className="block w-5 h-[2px] rounded-full transition-all duration-300"
+                style={{ background: "#e5e2e1", opacity: menuOpen ? 0 : 1 }} />
+              <span className="block w-5 h-[2px] rounded-full transition-all duration-300"
+                style={{ background: "#e5e2e1", transform: menuOpen ? "rotate(-45deg) translateY(-7px)" : "none" }} />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Drawer */}
+        <div className="md:hidden w-[92%] overflow-hidden transition-all duration-300"
+          style={{ maxHeight: menuOpen ? 300 : 0, opacity: menuOpen ? 1 : 0,
+            marginTop: menuOpen ? 8 : 0 }}>
+          <div className="flex flex-col gap-1 py-3 px-5 rounded-2xl"
+            style={{ background: "rgba(30,34,38,0.85)", backdropFilter: "blur(20px) saturate(1.3)",
+              WebkitBackdropFilter: "blur(20px) saturate(1.3)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)" }}>
+            {["Gallery", "AR Kitchen", "Recipes", "Pricing"].map(l => (
+              <a key={l} href="#" className="py-2.5 px-3 rounded-xl text-sm hover:bg-white/5 transition-colors duration-200"
+                style={{ color: "rgba(229,226,225,0.8)", fontFamily: bodyFont }}>{l}</a>
+            ))}
+            <div className="border-t border-white/5 mt-1 pt-2">
+              <a href="#" className="py-2.5 px-3 rounded-xl text-sm block hover:bg-white/5 transition-colors duration-200"
+                style={{ color: "rgba(229,226,225,0.8)", fontFamily: bodyFont }}>Login</a>
+            </div>
           </div>
         </div>
       </nav>
@@ -299,10 +330,10 @@ export default function Hero() {
       <svg className="hidden">
         <defs>
           <filter id="h-blur" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="6 0" />
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3 0" />
           </filter>
           <filter id="h-blur-sm" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="3 0" />
+            <feGaussianBlur in="SourceGraphic" stdDeviation="1.5 0" />
           </filter>
           <filter id="goo">
             <feGaussianBlur in="SourceGraphic" stdDeviation="30" result="blur" />
@@ -355,7 +386,7 @@ export default function Hero() {
             {/* Left Info Cards */}
             <div ref={leftCardsRef}
               className="absolute flex flex-col gap-4 z-10"
-              style={{ left: 0, top: "12%", willChange: "transform, opacity" }}>
+              style={{ left: 0, top: "30%", willChange: "transform, opacity" }}>
               <div className="px-5 py-4 flex items-center gap-3"
                 style={{ borderRadius: 16, background: "rgba(32,36,40,0.75)", backdropFilter: "blur(16px)",
                   boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
@@ -450,7 +481,7 @@ export default function Hero() {
 
             {/* QR Card (Right) */}
             <div ref={qrWrapperRef} className="absolute z-30"
-              style={{ right: -30, top: "12%", willChange: "transform, opacity" }}>
+              style={{ right: -30, top: "30%", willChange: "transform, opacity" }}>
               <motion.div style={{ x: qrPX, y: qrPY }}>
                 <div className="w-[160px] md:w-[200px] lg:w-[220px] flex flex-col p-4 gap-3"
                   style={{ borderRadius: 20, background: "rgba(30,34,38,0.55)",
