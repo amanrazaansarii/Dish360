@@ -1,10 +1,9 @@
 "use client";
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /* ── Custom Cursor (mix-blend-mode: difference) ── */
 function CustomCursor() {
@@ -146,13 +145,11 @@ function FluidBackground() {
 
 /* ── Fixed Navbar ── */
 function Navbar({ navRef }: { navRef: React.RefObject<HTMLElement | null> }) {
-  const bodyFont = "'Inter', sans-serif";
-  const headingFont = "'Inter', sans-serif";
   const [menuOpen, setMenuOpen] = React.useState(false);
 
   return (
     <div className="fixed top-0 left-0 w-full flex justify-center pointer-events-none" style={{ zIndex: 50 }}>
-      <nav ref={navRef} style={{ opacity: 0, fontFamily: bodyFont }}
+      <nav ref={navRef} style={{ opacity: 0 }}
         className="relative mt-5 w-[94%] max-w-6xl flex flex-col items-center px-6 py-3 pointer-events-auto">
         <div className="flex items-center justify-between w-full"
           style={{ borderRadius: 9999, padding: "10px 24px",
@@ -163,15 +160,14 @@ function Navbar({ navRef }: { navRef: React.RefObject<HTMLElement | null> }) {
           {/* Logo — links to dish360.in */}
           <a href="https://dish360.in" target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <img src="/dish360%20logo.png" alt="Dish360"
-              className="w-8 h-8 rounded-full object-cover"
-              style={{ border: "1px solid rgba(255,255,255,0.1)" }} />
-            <span className="text-lg font-bold" style={{ color: "#e5e2e1", fontFamily: headingFont }}>Dish360</span>
+            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-white/10">
+              <Image src="/dish360%20logo.png" alt="Dish360" fill className="object-cover" />
+            </div>
+            <span className="text-lg font-bold font-heading text-[#e5e2e1]">Dish360</span>
           </a>
 
           {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-8 text-sm"
-            style={{ color: "rgba(229,226,225,0.7)", fontFamily: bodyFont }}>
+          <div className="hidden md:flex items-center gap-8 text-sm text-[#e5e2e1]/70">
             {["Gallery", "AR Kitchen", "Recipes", "Pricing"].map(l => (
               <a key={l} href="#" className="hover:text-white transition-colors duration-200">{l}</a>
             ))}
@@ -179,10 +175,9 @@ function Navbar({ navRef }: { navRef: React.RefObject<HTMLElement | null> }) {
 
           {/* Right */}
           <div className="flex items-center gap-4">
-            <a href="#" className="hidden md:block text-sm transition-colors duration-200"
-              style={{ color: "rgba(229,226,225,0.7)", fontFamily: bodyFont }}>Login</a>
-            <button className="px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300"
-              style={{ background: "#8FB495", color: "#131313", fontFamily: bodyFont,
+            <a href="#" className="hidden md:block text-sm transition-colors duration-200 text-[#e5e2e1]/70">Login</a>
+            <button className="px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300 bg-[#8FB495] text-[#131313]"
+              style={{
                 boxShadow: "0 4px 16px rgba(143,180,149,0.25), inset 0 1px 0 rgba(255,255,255,0.15)" }}
               onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(143,180,149,0.4)"; }}
               onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(143,180,149,0.25)"; }}>
@@ -211,12 +206,10 @@ function Navbar({ navRef }: { navRef: React.RefObject<HTMLElement | null> }) {
               WebkitBackdropFilter: "blur(20px) saturate(1.3)",
               boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)" }}>
             {["Gallery", "AR Kitchen", "Recipes", "Pricing"].map(l => (
-              <a key={l} href="#" className="py-2.5 px-3 rounded-xl text-sm hover:bg-white/5 transition-colors duration-200"
-                style={{ color: "rgba(229,226,225,0.8)", fontFamily: bodyFont }}>{l}</a>
+              <a key={l} href="#" className="py-2.5 px-3 rounded-xl text-sm hover:bg-white/5 transition-colors duration-200 text-[#e5e2e1]/80">{l}</a>
             ))}
             <div className="border-t border-white/5 mt-1 pt-2">
-              <a href="#" className="py-2.5 px-3 rounded-xl text-sm block hover:bg-white/5 transition-colors duration-200"
-                style={{ color: "rgba(229,226,225,0.8)", fontFamily: bodyFont }}>Login</a>
+              <a href="#" className="py-2.5 px-3 rounded-xl text-sm block hover:bg-white/5 transition-colors duration-200 text-[#e5e2e1]/80">Login</a>
             </div>
           </div>
         </div>
@@ -270,16 +263,10 @@ export default function Hero() {
     return () => { if (el) el.removeEventListener("mousemove", handleMouse); };
   }, [handleMouse, isMobile]);
 
-  useEffect(() => {
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap";
-    document.head.appendChild(link);
-    return () => { document.head.removeChild(link); };
-  }, []);
 
   // GSAP Animations
   useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
       tl.fromTo(navRef.current, { y: -60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8 });
@@ -316,8 +303,6 @@ export default function Hero() {
     return () => ctx.revert();
   }, [isMobile]);
 
-  const bodyFont = "'Inter', sans-serif";
-  const headingFont = "'Inter', sans-serif";
 
   return (
     <section ref={sectionRef} className="relative w-full min-h-[200vh]"
@@ -357,8 +342,7 @@ export default function Hero() {
         {/* ── Headline (z-30: above phone) ── */}
         <div className="relative flex flex-col items-center text-center px-4 pt-[4vh] md:pt-[6vh]" style={{ zIndex: 30 }}>
           <h1 ref={headlineRef}
-            className="text-5xl md:text-7xl lg:text-8xl font-black leading-[1.05] mb-5 tracking-tight flex flex-col items-center justify-center gap-1"
-            style={{ fontFamily: headingFont, color: "#e5e2e1", opacity: 0 }}>
+            className="text-5xl md:text-7xl lg:text-8xl font-black font-heading leading-[1.05] mb-5 tracking-tight flex flex-col items-center justify-center gap-1 text-[#e5e2e1] opacity-0">
             <div>
               <span className="font-bold">Revolutionize</span>{" "}
               <span className="text-halftone font-black">Your</span>
@@ -369,8 +353,7 @@ export default function Hero() {
               <span style={{ filter: "url(#h-blur)", opacity: 0.8, color: "#aad0af" }}>AR.</span>
             </div>
           </h1>
-          <p ref={subRef} className="text-base md:text-lg max-w-xl leading-relaxed mb-6"
-            style={{ fontFamily: bodyFont, color: "rgba(229,226,225,0.6)", opacity: 0, fontWeight: 300 }}>
+          <p ref={subRef} className="text-base md:text-lg max-w-xl leading-relaxed mb-6 text-[#e5e2e1]/60 opacity-0 font-light">
             Experience <span className="font-semibold text-[#e5e2e1]">high-fidelity 3D claymorphic</span> rendering
             that brings culinary craft to life before it even hits the table.
           </p>
@@ -392,8 +375,8 @@ export default function Hero() {
                   boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
                 <div className="text-2xl">⭐</div>
                 <div>
-                  <div className="text-xl font-bold" style={{ color: "#e5e2e1", fontFamily: headingFont }}>4.9</div>
-                  <div className="text-xs" style={{ fontFamily: bodyFont, color: "rgba(229,226,225,0.7)" }}>Ratings</div>
+                  <div className="text-xl font-bold font-heading text-[#e5e2e1]">4.9</div>
+                  <div className="text-xs text-[#e5e2e1]/70">Ratings</div>
                 </div>
               </div>
               <div className="px-5 py-4 flex items-center gap-3"
@@ -404,8 +387,8 @@ export default function Hero() {
                   <span style={{ color: "#aad0af", fontSize: 14 }}>🔥</span>
                 </div>
                 <div>
-                  <div className="text-xl font-bold" style={{ color: "#e5e2e1", fontFamily: headingFont }}>550</div>
-                  <div className="text-xs" style={{ fontFamily: bodyFont, color: "rgba(229,226,225,0.7)" }}>cal</div>
+                  <div className="text-xl font-bold font-heading text-[#e5e2e1]">550</div>
+                  <div className="text-xs text-[#e5e2e1]/70">cal</div>
                 </div>
               </div>
             </div>
@@ -431,8 +414,7 @@ export default function Hero() {
                         style={{ background: "rgba(255,255,255,0.1)" }}>
                         <span className="text-white text-xs">✕</span>
                       </div>
-                      <div className="px-3 py-1 rounded-full text-[10px] font-medium tracking-wider"
-                        style={{ background: "rgba(170,208,175,0.2)", color: "#aad0af", fontFamily: bodyFont }}>
+                      <div className="px-3 py-1 rounded-full text-[10px] font-medium tracking-wider bg-[#aad0af]/20 text-[#aad0af]">
                         SCANNING...
                       </div>
                       <div className="w-7 h-7 rounded-full flex items-center justify-center"
@@ -459,20 +441,20 @@ export default function Hero() {
                   {isMobile ? (
                     <div ref={burgerPanRef} className="absolute inset-0 z-10 flex items-center justify-center"
                       style={{ width: "180%", left: "-40%", top: "5%" }}>
-                      <img src="/assets/hero-burger.png" alt="AR Burger" draggable={false}
-                        loading="eager" fetchPriority="high"
-                        className="w-full h-full object-contain select-none"
-                        style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.5))", willChange: "transform" }} />
+                      <div className="relative w-full h-full">
+                        <Image src="/assets/hero-burger.png" alt="AR Burger" fill className="object-contain select-none" priority
+                          style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.5))" }} />
+                      </div>
                     </div>
                   ) : (
                     <motion.div ref={burgerPanRef}
                       className="absolute inset-0 z-10 flex items-center justify-center"
                       style={{ width: "180%", left: "-40%", top: "5%",
                         x: burgerPanX, y: burgerPanY, willChange: "transform" }}>
-                      <img src="/assets/hero-burger.png" alt="AR Burger" draggable={false}
-                        loading="eager" fetchPriority="high"
-                        className="w-full h-full object-contain select-none"
-                        style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.5))" }} />
+                      <div className="relative w-full h-full">
+                        <Image src="/assets/hero-burger.png" alt="AR Burger" fill className="object-contain select-none" priority
+                          style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.5))" }} />
+                      </div>
                     </motion.div>
                   )}
                 </div>
@@ -493,8 +475,8 @@ export default function Hero() {
                       <span style={{ fontSize: 12 }}>📷</span>
                     </div>
                     <div>
-                      <div className="text-sm font-semibold" style={{ color: "#e5e2e1", fontFamily: headingFont }}>Scan Dish</div>
-                      <div className="text-[10px]" style={{ color: "rgba(229,226,225,0.4)", fontFamily: bodyFont }}>View in your space</div>
+                      <div className="text-sm font-semibold font-heading text-[#e5e2e1]">Scan Dish</div>
+                      <div className="text-[10px] text-[#e5e2e1]/40">View in your space</div>
                     </div>
                   </div>
                   <div className="aspect-square w-full rounded-xl overflow-hidden"
@@ -509,10 +491,10 @@ export default function Hero() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-xs font-medium" style={{ color: "#e5e2e1", fontFamily: bodyFont }}>Classic Smash</div>
-                      <div className="text-[10px]" style={{ fontFamily: bodyFont, color: "rgba(229,226,225,0.7)" }}>Burger</div>
+                      <div className="text-xs font-medium text-[#e5e2e1]">Classic Smash</div>
+                      <div className="text-[10px] text-[#e5e2e1]/70">Burger</div>
                     </div>
-                    <div className="text-sm font-bold text-[#aad0af]" style={{ fontFamily: bodyFont }}>$14.99</div>
+                    <div className="text-sm font-bold text-[#aad0af]">$14.99</div>
                   </div>
                 </div>
               </motion.div>
@@ -523,8 +505,7 @@ export default function Hero() {
 
         {/* ── Scroll Indicator ── */}
         <div ref={scrollTextRef} className="flex flex-col items-center gap-2 py-8">
-          <span className="text-[11px] tracking-[0.2em] font-medium"
-            style={{ color: "rgba(229,226,225,0.35)", fontFamily: bodyFont }}>SCROLL</span>
+          <span className="text-[11px] tracking-[0.2em] font-medium text-[#e5e2e1]/35">SCROLL</span>
           <motion.div animate={{ y: [0, 6, 0] }}
             transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}>
             <svg className="w-4 h-4" fill="none" stroke="rgba(229,226,225,0.3)" viewBox="0 0 24 24">
