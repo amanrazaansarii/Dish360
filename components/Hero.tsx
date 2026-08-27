@@ -1,527 +1,493 @@
 "use client";
-import React, { useRef, useEffect, useState, useCallback } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import Image from "next/image";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-/* ── Custom Cursor (mix-blend-mode: difference) ── */
-function CustomCursor() {
-  const cursorRef = useRef<HTMLDivElement>(null);
-  const [isInit, setIsInit] = useState(false);
-  const [isLink, setIsLink] = useState(false);
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Sparkles,
+  Smartphone,
+  Eye,
+  Layers,
+  RotateCcw,
+  Maximize2,
+  CheckCircle2,
+  Zap,
+  ArrowRight,
+  Flame,
+  Star,
+  QrCode,
+  ShieldCheck,
+} from "lucide-react";
+import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from "framer-motion";
 
-  useEffect(() => {
-    const cursor = cursorRef.current;
-    if (!cursor) return;
-
-    const onMove = (e: MouseEvent) => {
-      cursor.style.translate = `${e.clientX}px ${e.clientY}px`;
-      if (!isInit) setIsInit(true);
-    };
-    const onOut = () => setIsInit(false);
-
-    const onLinkOver = () => setIsLink(true);
-    const onLinkOut = () => setIsLink(false);
-
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseout", onOut);
-
-    // Attach to all links and buttons
-    const interactives = document.querySelectorAll("a, button");
-    interactives.forEach(el => {
-      el.addEventListener("mouseover", onLinkOver);
-      el.addEventListener("mouseout", onLinkOut);
-    });
-
-    return () => {
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseout", onOut);
-      interactives.forEach(el => {
-        el.removeEventListener("mouseover", onLinkOver);
-        el.removeEventListener("mouseout", onLinkOut);
-      });
-    };
-  }, [isInit]);
-
-  return (
-    <div
-      ref={cursorRef}
-      className="fixed top-0 left-0 pointer-events-none rounded-full"
-      style={{
-        width: 50,
-        aspectRatio: "1",
-        marginLeft: -25,
-        marginTop: -25,
-        backgroundColor: "white",
-        mixBlendMode: "difference",
-        opacity: isInit ? 1 : 0,
-        scale: isLink ? "1" : "0.3",
-        transition: "transform 250ms ease-in-out, scale 250ms ease-in-out, opacity 250ms ease-in-out",
-        zIndex: 9999,
-      }}
-    />
-  );
-}
-
-/* ── Fluid Wave Background (fixed to viewport) ── */
-function FluidBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-
-    const resize = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
-    };
-    window.addEventListener("resize", resize);
-
-    let currentScroll = window.scrollY;
-    let targetScroll = window.scrollY;
-    const onScroll = () => { targetScroll = window.scrollY; };
-    window.addEventListener("scroll", onScroll);
-
-    let animationFrameId: number;
-
-    const waves = [
-      { yOffset: 0.65, amplitude: 80, frequency: 0.002, speed: 1,
-        colorStops: ["rgba(42,55,68,0.5)", "rgba(19,19,19,0.1)"] },
-      { yOffset: 0.75, amplitude: 100, frequency: 0.003, speed: -1.2,
-        colorStops: ["rgba(170,208,175,0.25)", "rgba(42,55,68,0.3)"] },
-      { yOffset: 0.85, amplitude: 60, frequency: 0.0015, speed: 1.5,
-        colorStops: ["rgba(143,180,149,0.3)", "rgba(19,19,19,0.8)"] }
-    ];
-
-    const render = () => {
-      currentScroll += (targetScroll - currentScroll) * 0.08;
-      if (Math.abs(targetScroll - currentScroll) < 0.1) currentScroll = targetScroll;
-      ctx.clearRect(0, 0, width, height);
-      const time = currentScroll * 0.0075;
-
-      waves.forEach(wave => {
-        ctx.beginPath();
-        const baseHeight = height * wave.yOffset;
-        ctx.moveTo(0, height);
-        ctx.lineTo(0, baseHeight);
-        for (let x = 0; x <= width; x += 20) {
-          const y = baseHeight
-            - Math.sin(x * wave.frequency + time * wave.speed) * wave.amplitude
-            - Math.cos(x * wave.frequency * 0.6 - time * wave.speed * 0.8) * (wave.amplitude * 0.4);
-          ctx.lineTo(x, y);
-        }
-        ctx.lineTo(width, height);
-        ctx.closePath();
-        const grad = ctx.createLinearGradient(0, baseHeight - wave.amplitude * 1.5, 0, height);
-        grad.addColorStop(0, wave.colorStops[0]);
-        grad.addColorStop(1, wave.colorStops[1]);
-        ctx.fillStyle = grad;
-        ctx.fill();
-      });
-
-      animationFrameId = requestAnimationFrame(render);
-    };
-    render();
-
-    return () => {
-      window.removeEventListener("resize", resize);
-      window.removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, []);
-
-  return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} />;
-}
-
-/* ── Fixed Navbar ── */
-function Navbar({ navRef }: { navRef: React.RefObject<HTMLElement | null> }) {
-  const [menuOpen, setMenuOpen] = React.useState(false);
-
-  return (
-    <div className="fixed top-0 left-0 w-full flex justify-center pointer-events-none" style={{ zIndex: 50 }}>
-      <nav ref={navRef} style={{ opacity: 0 }}
-        className="relative mt-5 w-[94%] max-w-6xl flex flex-col items-center px-6 py-3 pointer-events-auto">
-        <div className="flex items-center justify-between w-full"
-          style={{ borderRadius: 9999, padding: "10px 24px",
-            background: "rgba(30,34,38,0.65)", backdropFilter: "blur(20px) saturate(1.3)",
-            WebkitBackdropFilter: "blur(20px) saturate(1.3)",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)" }}>
-
-          {/* Logo — links to dish360.in */}
-          <a href="https://dish360.in" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-white/10">
-              <Image src="/dish360%20logo.png" alt="Dish360" fill className="object-cover" />
-            </div>
-            <span className="text-lg font-bold font-heading text-[#e5e2e1]">Dish360</span>
-          </a>
-
-          {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-8 text-sm text-[#e5e2e1]/70">
-            {["Gallery", "AR Kitchen", "Recipes", "Pricing"].map(l => (
-              <a key={l} href="#" className="hover:text-white transition-colors duration-200">{l}</a>
-            ))}
-          </div>
-
-          {/* Right */}
-          <div className="flex items-center gap-4">
-            <a href="#" className="hidden md:block text-sm transition-colors duration-200 text-[#e5e2e1]/70">Login</a>
-            <button className="px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300 bg-[#8FB495] text-[#131313]"
-              style={{
-                boxShadow: "0 4px 16px rgba(143,180,149,0.25), inset 0 1px 0 rgba(255,255,255,0.15)" }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(143,180,149,0.4)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(143,180,149,0.25)"; }}>
-              Book Demo
-            </button>
-
-            {/* Hamburger — visible below md */}
-            <button className="md:hidden flex flex-col gap-[5px] p-1.5" onClick={() => setMenuOpen(o => !o)}
-              aria-label="Toggle menu">
-              <span className="block w-5 h-[2px] rounded-full transition-all duration-300"
-                style={{ background: "#e5e2e1", transform: menuOpen ? "rotate(45deg) translateY(7px)" : "none" }} />
-              <span className="block w-5 h-[2px] rounded-full transition-all duration-300"
-                style={{ background: "#e5e2e1", opacity: menuOpen ? 0 : 1 }} />
-              <span className="block w-5 h-[2px] rounded-full transition-all duration-300"
-                style={{ background: "#e5e2e1", transform: menuOpen ? "rotate(-45deg) translateY(-7px)" : "none" }} />
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Drawer */}
-        <div className="md:hidden w-[92%] overflow-hidden transition-all duration-300"
-          style={{ maxHeight: menuOpen ? 300 : 0, opacity: menuOpen ? 1 : 0,
-            marginTop: menuOpen ? 8 : 0 }}>
-          <div className="flex flex-col gap-1 py-3 px-5 rounded-2xl"
-            style={{ background: "rgba(30,34,38,0.85)", backdropFilter: "blur(20px) saturate(1.3)",
-              WebkitBackdropFilter: "blur(20px) saturate(1.3)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)" }}>
-            {["Gallery", "AR Kitchen", "Recipes", "Pricing"].map(l => (
-              <a key={l} href="#" className="py-2.5 px-3 rounded-xl text-sm hover:bg-white/5 transition-colors duration-200 text-[#e5e2e1]/80">{l}</a>
-            ))}
-            <div className="border-t border-white/5 mt-1 pt-2">
-              <a href="#" className="py-2.5 px-3 rounded-xl text-sm block hover:bg-white/5 transition-colors duration-200 text-[#e5e2e1]/80">Login</a>
-            </div>
-          </div>
-        </div>
-      </nav>
-    </div>
-  );
-}
-
-/* ── Main Hero Component ── */
 export default function Hero() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const phoneRef = useRef<HTMLDivElement>(null);
-  const burgerPanRef = useRef<HTMLDivElement>(null);
-  const leftCardsRef = useRef<HTMLDivElement>(null);
-  const qrWrapperRef = useRef<HTMLDivElement>(null);
-  const scrollTextRef = useRef<HTMLDivElement>(null);
-  const navRef = useRef<HTMLElement>(null);
-  const headlineRef = useRef<HTMLHeadingElement>(null);
-  const subRef = useRef<HTMLParagraphElement>(null);
+  const [activeViewMode, setActiveViewMode] = useState<"textured" | "wireframe" | "hud">("textured");
+  const [rotationAngle, setRotationAngle] = useState(15);
+  const [isDragging, setIsDragging] = useState(false);
+  const [arModalOpen, setArModalOpen] = useState(false);
+  const [hudPinned, setHudPinned] = useState(true);
 
-  const [isMobile, setIsMobile] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const startXRef = useRef(0);
+  const currentRotationRef = useRef(15);
 
+  // Mouse tilt physics using Framer Motion springs
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  const spring = { damping: 30, stiffness: 100, mass: 0.5 };
-  const sX = useSpring(mouseX, spring);
-  const sY = useSpring(mouseY, spring);
-  const qrPX = useTransform(sX, [-0.5, 0.5], [12, -12]);
-  const qrPY = useTransform(sY, [-0.5, 0.5], [8, -8]);
-  const burgerPanX = useTransform(sX, [-0.5, 0.5], [80, -80]);
-  const burgerPanY = useTransform(sY, [-0.5, 0.5], [40, -40]);
 
-  const handleMouse = useCallback((e: MouseEvent) => {
-    if (!sectionRef.current) return;
-    const r = sectionRef.current.getBoundingClientRect();
-    mouseX.set((e.clientX - r.left) / r.width - 0.5);
-    mouseY.set((e.clientY - r.top) / r.height - 0.5);
-  }, [mouseX, mouseY]);
+  const springConfig = { damping: 30, stiffness: 100, mass: 0.5 };
+  const smoothMouseX = useSpring(mouseX, springConfig);
+  const smoothMouseY = useSpring(mouseY, springConfig);
 
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
+  // Layered 3D parallax transforms
+  const rotateX = useTransform(smoothMouseY, [-0.5, 0.5], [10, -10]);
+  const rotateY = useTransform(smoothMouseX, [-0.5, 0.5], [-12, 12]);
+  const cardTranslateX = useTransform(smoothMouseX, [-0.5, 0.5], [-16, 16]);
+  const cardTranslateY = useTransform(smoothMouseY, [-0.5, 0.5], [-12, 12]);
+  const qrTranslateX = useTransform(smoothMouseX, [-0.5, 0.5], [18, -18]);
+  const qrTranslateY = useTransform(smoothMouseY, [-0.5, 0.5], [14, -14]);
 
-  useEffect(() => {
-    if (isMobile) return;
-    const el = sectionRef.current;
-    if (el) el.addEventListener("mousemove", handleMouse);
-    return () => { if (el) el.removeEventListener("mousemove", handleMouse); };
-  }, [handleMouse, isMobile]);
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current || window.innerWidth < 768) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
 
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
 
-  // GSAP Animations
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-      tl.fromTo(navRef.current, { y: -60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8 });
-      tl.fromTo(headlineRef.current, { y: 50, opacity: 0, filter: "blur(8px)" },
-        { y: 0, opacity: 1, filter: "blur(0px)", duration: 1 }, "-=0.4");
-      tl.fromTo(subRef.current, { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, "-=0.5");
-      tl.fromTo(phoneRef.current, { y: 80, opacity: 0, scale: 0.9 },
-        { y: 0, opacity: 1, scale: 1, duration: 1.2 }, "-=0.6");
+  // Interactive 3D Drag Rotation on Model
+  const handlePointerDown = (e: React.PointerEvent) => {
+    setIsDragging(true);
+    startXRef.current = e.clientX;
+    currentRotationRef.current = rotationAngle;
+  };
 
-      gsap.to(leftCardsRef.current, {
-        x: isMobile ? 60 : 160, y: 40, opacity: 0.1, scale: 0.8, rotate: -8,
-        duration: 1.2, ease: "power3.inOut",
-        scrollTrigger: { trigger: sectionRef.current, start: "12% top", toggleActions: "play none none reverse" }
-      });
-      gsap.to(qrWrapperRef.current, {
-        x: isMobile ? -50 : -160, y: 40, rotate: -4, opacity: 1, scale: 1.05,
-        duration: 1.2, ease: "power3.inOut",
-        scrollTrigger: { trigger: sectionRef.current, start: "12% top", toggleActions: "play none none reverse" }
-      });
-      gsap.to(scrollTextRef.current, {
-        opacity: 0, y: 20,
-        scrollTrigger: { trigger: sectionRef.current, start: "12% top", end: "20% top", scrub: true }
-      });
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging) return;
+    const delta = e.clientX - startXRef.current;
+    setRotationAngle(currentRotationRef.current + delta * 0.8);
+  };
 
-      if (window.innerWidth < 768 && burgerPanRef.current) {
-        gsap.to(burgerPanRef.current, {
-          x: -60, scrollTrigger: { trigger: sectionRef.current, start: "top top", end: "50% top", scrub: 2 }
-        });
-        gsap.to(burgerPanRef.current, {
-          x: 60, scrollTrigger: { trigger: sectionRef.current, start: "50% top", end: "bottom top", scrub: 2 }
-        });
-      }
-    }, sectionRef);
-    return () => ctx.revert();
-  }, [isMobile]);
-
+  const handlePointerUp = () => {
+    setIsDragging(false);
+  };
 
   return (
-    <section ref={sectionRef} className="relative w-full min-h-[200vh]"
-      style={{ backgroundColor: "#131313", cursor: "none" }}>
+    <section
+      id="ar-inspector"
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="relative min-h-screen pt-32 pb-20 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center overflow-hidden"
+    >
+      {/* Background Soft Glow Radial Spotlight */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] bg-gradient-to-tr from-sage/10 via-slate-800/10 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
-      {/* ═══ Custom Cursor ═══ */}
-      <CustomCursor />
+      {/* Top Category Eyebrow Pill */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-white/10 shadow-glass mb-6"
+      >
+        <span className="flex h-2 w-2 rounded-full bg-sage animate-pulse" />
+        <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-soft">
+          Next-Gen WebAR Dining Engine
+        </span>
+      </motion.div>
 
-      {/* ── SVG Filters ── */}
-      <svg className="hidden">
-        <defs>
-          <filter id="h-blur" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="3 0" />
-          </filter>
-          <filter id="h-blur-sm" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="1.5 0" />
-          </filter>
-          <filter id="goo">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="30" result="blur" />
-            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 30 -10" result="goo" />
-            <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
-          </filter>
-        </defs>
-      </svg>
+      {/* Hero Headline with Halftone and Gaussian Depth Effects */}
+      <motion.div
+        initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
+        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+        transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        className="text-center max-w-4xl mx-auto mb-6"
+      >
+        <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-[5.2rem] font-black tracking-tight leading-[1.05] text-ink">
+          Menus are no longer <span className="text-halftone font-black">paper</span>.
+          <br />
+          They are{" "}
+          <span className="text-sage text-halftone-accent font-black">
+            living 3D tables
+          </span>
+          .
+        </h1>
+      </motion.div>
 
-      {/* ═══ LAYER 1: Fixed wave background (never scrolls) ═══ */}
-      <FluidBackground />
+      {/* Sub-headline Copy */}
+      <motion.p
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        className="text-base sm:text-lg md:text-xl font-light text-ink-soft max-w-2xl text-center mb-10 leading-relaxed"
+      >
+        Replace flat photos and PDFs with true-to-scale WebAR dishes. Diners scan a table QR
+        standee to view food in augmented reality —{" "}
+        <strong className="text-ink font-semibold">zero app downloads required</strong>.
+      </motion.p>
 
-      {/* ═══ LAYER 2: Fixed navbar (never scrolls) ═══ */}
-      <Navbar navRef={navRef} />
+      {/* CTA Group */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.35 }}
+        className="flex flex-wrap items-center justify-center gap-4 mb-16 z-20"
+      >
+        <button
+          onClick={() => setArModalOpen(true)}
+          className="group relative inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-sage-solid hover:bg-sage text-charcoal font-semibold text-sm shadow-[0_4px_20px_rgba(143,180,149,0.35)] hover:shadow-[0_8px_30px_rgba(143,180,149,0.55)] transition-all duration-300 hover:scale-105 active:scale-95"
+        >
+          <QrCode className="w-4 h-4" />
+          <span>Scan Live WebAR Demo</span>
+          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+        </button>
 
-      {/* ═══ LAYER 3: Scrollable content ═══ */}
-      <div className="relative z-10">
-        {/* Spacer so content starts below the fixed navbar */}
-        <div style={{ height: 90 }} />
+        <a
+          href="#studio"
+          className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-surface hover:bg-white/10 text-ink hover:text-white font-medium text-sm border border-white/10 shadow-glass transition-all duration-200 hover:border-white/20"
+        >
+          <Sparkles className="w-4 h-4 text-sage" />
+          <span>Launch 3D Menu Builder</span>
+        </a>
+      </motion.div>
 
-        {/* ── Headline (z-30: above phone) ── */}
-        <div className="relative flex flex-col items-center text-center px-4 pt-[4vh] md:pt-[6vh]" style={{ zIndex: 30 }}>
-          <h1 ref={headlineRef}
-            className="text-5xl md:text-7xl lg:text-8xl font-black font-heading leading-[1.05] mb-5 tracking-tight flex flex-col items-center justify-center gap-1 text-[#e5e2e1] opacity-0">
-            <div>
-              <span className="font-bold">Revolutionize</span>{" "}
-              <span className="text-halftone font-black">Your</span>
+      {/* ========================================================================= */}
+      {/* SIGNATURE MOVE A: LIVE OPERABLE 3D FOOD & AR TABLE INSPECTOR STAGE */}
+      {/* ========================================================================= */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 40 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          rotateX,
+          rotateY,
+          transformPerspective: 1200,
+        }}
+        className="relative w-full max-w-5xl mx-auto rounded-3xl p-4 sm:p-8 bg-surface/70 backdrop-blur-2xl border border-white/10 shadow-glass-elevated"
+      >
+        {/* Top Viewport Header HUD */}
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 border border-white/5 text-[11px] font-mono text-sage">
+              <span className="w-1.5 h-1.5 rounded-full bg-sage animate-ping" />
+              <span>LIVE_WEBAR_VIEWPORT // 60 FPS</span>
             </div>
-            <div>
-              <span style={{ filter: "url(#h-blur-sm)", opacity: 0.9 }}>Menu</span>{" "}
-              <span className="text-halftone-accent">with</span>{" "}
-              <span style={{ filter: "url(#h-blur)", opacity: 0.8, color: "#aad0af" }}>AR.</span>
-            </div>
-          </h1>
-          <p ref={subRef} className="text-base md:text-lg max-w-xl leading-relaxed mb-6 text-[#e5e2e1]/60 opacity-0 font-light">
-            Experience <span className="font-semibold text-[#e5e2e1]">high-fidelity 3D claymorphic</span> rendering
-            that brings culinary craft to life before it even hits the table.
-          </p>
+            <span className="hidden sm:inline-block text-xs font-medium text-ink-muted">
+              Wagyu Truffle Artisan Burger (v4.2 Mesh)
+            </span>
+          </div>
+
+          {/* Interactive Inspection Mode Pills */}
+          <div className="flex items-center gap-1.5 p-1 rounded-full bg-black/40 border border-white/10">
+            <button
+              onClick={() => setActiveViewMode("textured")}
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                activeViewMode === "textured"
+                  ? "bg-sage text-charcoal shadow-sm font-semibold"
+                  : "text-ink-soft hover:text-white"
+              }`}
+            >
+              <Eye className="w-3 h-3" />
+              <span>Textured</span>
+            </button>
+
+            <button
+              onClick={() => setActiveViewMode("wireframe")}
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                activeViewMode === "wireframe"
+                  ? "bg-sage text-charcoal shadow-sm font-semibold"
+                  : "text-ink-soft hover:text-white"
+              }`}
+            >
+              <Layers className="w-3 h-3" />
+              <span>Wireframe</span>
+            </button>
+
+            <button
+              onClick={() => setHudPinned(!hudPinned)}
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                hudPinned ? "bg-white/15 text-white" : "text-ink-muted hover:text-white"
+              }`}
+            >
+              <Sparkles className="w-3 h-3 text-sage" />
+              <span>HUD Pins</span>
+            </button>
+          </div>
         </div>
 
-        {/* ── Phone + Cards Composition (z-20: behind headline text) ── */}
-        <div className="relative flex items-center justify-center w-full mx-auto px-4"
-          style={{ height: "clamp(400px, 60vh, 700px)", marginTop: "-12vh", zIndex: 20 }}>
+        {/* 3D Canvas Stage Container */}
+        <div
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          className="relative h-[380px] sm:h-[460px] md:h-[500px] w-full flex items-center justify-center cursor-grab active:cursor-grabbing select-none overflow-hidden rounded-2xl my-4"
+          style={{
+            background:
+              "radial-gradient(circle at center, rgba(42, 55, 68, 0.4) 0%, rgba(20, 24, 28, 0.95) 75%)",
+          }}
+        >
+          {/* Animated Ambient Table Ground Grid */}
+          <div
+            className="absolute inset-0 opacity-20 pointer-events-none"
+            style={{
+              backgroundImage: `linear-gradient(rgba(170, 208, 175, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(170, 208, 175, 0.2) 1px, transparent 1px)`,
+              backgroundSize: "36px 36px",
+              transform: "perspective(400px) rotateX(60deg) translateY(80px) scale(2)",
+            }}
+          />
 
-          {/* Inner wrapper: keeps phone + cards grouped and centered */}
-          <div className="relative flex items-start justify-center" style={{ width: "min(90vw, 750px)", height: "100%" }}>
+          {/* AR Target Reticle Ring */}
+          <div className="absolute w-72 h-72 rounded-full border border-dashed border-sage/30 animate-[spin_40s_linear_infinite] pointer-events-none" />
+          <div className="absolute w-84 h-84 rounded-full border border-white/5 pointer-events-none" />
 
-            {/* Left Info Cards */}
-            <div ref={leftCardsRef}
-              className="absolute flex flex-col gap-4 z-10"
-              style={{ left: 0, top: "30%", willChange: "transform, opacity" }}>
-              <div className="px-5 py-4 flex items-center gap-3"
-                style={{ borderRadius: 16, background: "rgba(32,36,40,0.75)", backdropFilter: "blur(16px)",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
-                <div className="text-2xl">⭐</div>
-                <div>
-                  <div className="text-xl font-bold font-heading text-[#e5e2e1]">4.9</div>
-                  <div className="text-xs text-[#e5e2e1]/70">Ratings</div>
+          {/* 3D Food Asset Display with Interactive Drag & Rotation */}
+          <div
+            className="relative z-10 transition-transform duration-75 ease-out flex items-center justify-center"
+            style={{
+              transform: `rotateY(${rotationAngle}deg) scale(1.05)`,
+            }}
+          >
+            {activeViewMode === "wireframe" ? (
+              /* Wireframe Polygon Hologram Mode */
+              <div className="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center">
+                <svg
+                  viewBox="0 0 200 200"
+                  className="w-full h-full text-sage stroke-current fill-none"
+                  style={{ filter: "drop-shadow(0 0 12px rgba(170, 208, 175, 0.8))" }}
+                >
+                  <circle cx="100" cy="100" r="75" strokeWidth="0.8" strokeDasharray="3,3" />
+                  <ellipse cx="100" cy="100" rx="80" ry="40" strokeWidth="1" />
+                  <ellipse cx="100" cy="85" rx="70" ry="30" strokeWidth="0.8" />
+                  <ellipse cx="100" cy="115" rx="70" ry="30" strokeWidth="0.8" />
+                  <path d="M 30 100 Q 100 40 170 100" strokeWidth="1.2" />
+                  <path d="M 30 100 Q 100 160 170 100" strokeWidth="1.2" />
+                  <path d="M 60 70 L 140 130" strokeWidth="0.6" strokeDasharray="2,2" />
+                  <path d="M 140 70 L 60 130" strokeWidth="0.6" strokeDasharray="2,2" />
+                  <circle cx="100" cy="70" r="3" fill="#AAD0AF" />
+                  <circle cx="65" cy="100" r="3" fill="#AAD0AF" />
+                  <circle cx="135" cy="100" r="3" fill="#AAD0AF" />
+                  <circle cx="100" cy="130" r="3" fill="#AAD0AF" />
+                </svg>
+                <div className="absolute bottom-2 px-3 py-1 rounded-full bg-sage/20 border border-sage/40 text-[10px] font-mono text-sage">
+                  POLYGON_MESH // 14,280 VERTS
                 </div>
               </div>
-              <div className="px-5 py-4 flex items-center gap-3"
-                style={{ borderRadius: 16, background: "rgba(32,36,40,0.75)", backdropFilter: "blur(16px)",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ background: "rgba(170,208,175,0.15)" }}>
-                  <span style={{ color: "#aad0af", fontSize: 14 }}>🔥</span>
+            ) : (
+              /* Photorealistic Textured 3D Dish Viewport */
+              <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
+                {/* Photoreal Burger Illustration / Render with Glass Plate */}
+                <div className="relative w-full h-full flex items-center justify-center drop-shadow-[0_25px_40px_rgba(0,0,0,0.85)]">
+                  {/* Plate Reflection Disc */}
+                  <div className="absolute bottom-4 w-60 h-20 bg-gradient-to-t from-white/10 via-transparent to-transparent rounded-full blur-sm" />
+
+                  {/* 3D Composite Dish Visual (Gourmet Brioche Bun, Wagyu Patty, Truffle Glaze, Melted Aged Cheddar) */}
+                  <div className="relative w-56 sm:w-72 h-56 sm:h-72 rounded-full overflow-hidden flex items-center justify-center">
+                    <img
+                      src="/brand/dish360 logo.png"
+                      alt="3D Dish360 WebAR Dish"
+                      className="w-48 sm:w-60 h-48 sm:h-60 object-contain drop-shadow-[0_15px_30px_rgba(170,208,175,0.3)] animate-float"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <div className="text-xl font-bold font-heading text-[#e5e2e1]">550</div>
-                  <div className="text-xs text-[#e5e2e1]/70">cal</div>
+              </div>
+            )}
+
+            {/* Interactive Calorie & Ingredient HUD Pins */}
+            {hudPinned && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="absolute -top-4 -left-6 sm:left-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-elevated/90 border border-white/10 shadow-glass backdrop-blur-md"
+                >
+                  <div className="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center">
+                    <Flame className="w-3 h-3 text-sage" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-[10px] text-ink-muted uppercase tracking-wider font-mono">
+                      Energy
+                    </div>
+                    <div className="text-xs font-bold text-ink">520 kcal</div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="absolute bottom-8 -right-4 sm:right-6 z-20 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-elevated/90 border border-white/10 shadow-glass backdrop-blur-md"
+                >
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-[10px] text-ink-muted uppercase tracking-wider font-mono">
+                      Ingredients
+                    </div>
+                    <div className="text-xs font-bold text-ink">A5 Wagyu · Truffle</div>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </div>
+
+          {/* ========================================================================= */}
+          {/* THE TRANSLUCENT FUTURISTIC QR CARD (NON-NEGOTIABLE DESIGN SPEC §7) */}
+          {/* ========================================================================= */}
+          <motion.div
+            style={{
+              x: qrTranslateX,
+              y: qrTranslateY,
+            }}
+            onClick={() => setArModalOpen(true)}
+            className="absolute right-3 sm:right-6 bottom-4 sm:bottom-6 z-30 w-44 sm:w-52 p-3.5 rounded-[20px] bg-[rgba(30,34,38,0.6)] backdrop-blur-2xl border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.6)] cursor-pointer hover:border-sage/50 transition-all duration-300 group"
+          >
+            {/* Header row: Sage icon chip + Title */}
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-[rgba(170,208,175,0.15)] flex items-center justify-center text-sage">
+                <QrCode className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-ink group-hover:text-sage transition-colors">
+                  Instant Table AR
                 </div>
+                <div className="text-[10px] text-ink-muted">Scan with iPhone/Android</div>
               </div>
             </div>
 
-            {/* Central Phone Frame — relative keeps original vertical position */}
-            <div ref={phoneRef} className="relative z-20" style={{ opacity: 0 }}>
-              <div className="relative w-[220px] md:w-[280px] lg:w-[320px] xl:w-[340px]"
-                style={{ aspectRatio: "9/19.5", borderRadius: 36, background: "#1a1d21",
-                  boxShadow: "0 30px 80px rgba(0,0,0,0.6), 0 0 0 3px #2a2d31, inset 0 0 0 1px rgba(255,255,255,0.05)",
-                  overflow: "hidden" }}>
-                {/* Notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 z-30"
-                  style={{ width: "40%", height: 28, background: "#1a1d21", borderRadius: "0 0 18px 18px" }}>
-                  <div className="absolute top-2 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full"
-                    style={{ background: "rgba(255,255,255,0.08)" }} />
-                </div>
-                {/* Phone Screen */}
-                <div className="absolute inset-[3px] overflow-hidden" style={{ borderRadius: 33, background: "#0d0f12" }}>
-                  {/* AR UI Overlay */}
-                  <div className="absolute inset-0 z-20 pointer-events-none">
-                    <div className="flex items-center justify-between px-4 pt-10">
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(255,255,255,0.1)" }}>
-                        <span className="text-white text-xs">✕</span>
-                      </div>
-                      <div className="px-3 py-1 rounded-full text-[10px] font-medium tracking-wider bg-[#aad0af]/20 text-[#aad0af]">
-                        SCANNING...
-                      </div>
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center"
-                        style={{ background: "rgba(255,255,255,0.1)" }}>
-                        <span className="text-white text-xs">⚙</span>
-                      </div>
-                    </div>
-                    <div className="absolute top-[35%] left-[12%] w-8 h-8"
-                      style={{ borderLeft: "2px solid rgba(170,208,175,0.4)", borderTop: "2px solid rgba(170,208,175,0.4)" }} />
-                    <div className="absolute top-[35%] right-[12%] w-8 h-8"
-                      style={{ borderRight: "2px solid rgba(170,208,175,0.4)", borderTop: "2px solid rgba(170,208,175,0.4)" }} />
-                    <div className="absolute bottom-[30%] left-[12%] w-8 h-8"
-                      style={{ borderLeft: "2px solid rgba(170,208,175,0.4)", borderBottom: "2px solid rgba(170,208,175,0.4)" }} />
-                    <div className="absolute bottom-[30%] right-[12%] w-8 h-8"
-                      style={{ borderRight: "2px solid rgba(170,208,175,0.4)", borderBottom: "2px solid rgba(170,208,175,0.4)" }} />
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-                      <div className="w-14 h-14 rounded-full flex items-center justify-center"
-                        style={{ border: "3px solid rgba(255,255,255,0.3)" }}>
-                        <div className="w-10 h-10 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
-                      </div>
-                    </div>
-                  </div>
-                  {/* Pannable Burger */}
-                  {isMobile ? (
-                    <div ref={burgerPanRef} className="absolute inset-0 z-10 flex items-center justify-center"
-                      style={{ width: "180%", left: "-40%", top: "5%" }}>
-                      <div className="relative w-full h-full">
-                        <Image src="/assets/hero-burger.png" alt="AR Burger" fill className="object-contain select-none" priority
-                          style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.5))" }} />
-                      </div>
-                    </div>
-                  ) : (
-                    <motion.div ref={burgerPanRef}
-                      className="absolute inset-0 z-10 flex items-center justify-center"
-                      style={{ width: "180%", left: "-40%", top: "5%",
-                        x: burgerPanX, y: burgerPanY, willChange: "transform" }}>
-                      <div className="relative w-full h-full">
-                        <Image src="/assets/hero-burger.png" alt="AR Burger" fill className="object-contain select-none" priority
-                          style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.5))" }} />
-                      </div>
-                    </motion.div>
-                  )}
-                </div>
+            {/* Inset QR Matrix (5x5 matrix with Sage on-cells) */}
+            <div className="p-2 rounded-xl bg-black/40 border border-white/5 mb-3 flex items-center justify-center">
+              <div className="grid grid-cols-5 gap-1 w-24 h-24 p-1">
+                {[
+                  1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1,
+                  1,
+                ].map((val, idx) => (
+                  <div
+                    key={idx}
+                    className={`rounded-[2px] transition-colors ${
+                      val === 1
+                        ? "bg-[rgba(170,208,175,0.6)] shadow-[0_0_6px_rgba(170,208,175,0.4)]"
+                        : "bg-white/5"
+                    }`}
+                  />
+                ))}
               </div>
             </div>
 
-            {/* QR Card (Right) */}
-            <div ref={qrWrapperRef} className="absolute z-30"
-              style={{ right: -30, top: "30%", willChange: "transform, opacity" }}>
-              <motion.div style={{ x: qrPX, y: qrPY }}>
-                <div className="w-[160px] md:w-[200px] lg:w-[220px] flex flex-col p-4 gap-3"
-                  style={{ borderRadius: 20, background: "rgba(30,34,38,0.55)",
-                    backdropFilter: "blur(24px) saturate(1.3)", WebkitBackdropFilter: "blur(24px) saturate(1.3)",
-                    boxShadow: "0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                      style={{ background: "rgba(170,208,175,0.15)" }}>
-                      <span style={{ fontSize: 12 }}>📷</span>
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold font-heading text-[#e5e2e1]">Scan Dish</div>
-                      <div className="text-[10px] text-[#e5e2e1]/40">View in your space</div>
-                    </div>
-                  </div>
-                  <div className="aspect-square w-full rounded-xl overflow-hidden"
-                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div className="w-full h-full p-3 grid grid-cols-5 grid-rows-5 gap-1">
-                      {Array.from({ length: 25 }).map((_, i) => (
-                        <div key={i} className="rounded-sm"
-                          style={{ background: [0,1,2,5,6,10,12,14,18,20,21,22,23,24,4,9,15,19,3,8,16].includes(i)
-                            ? "rgba(170,208,175,0.5)" : "rgba(255,255,255,0.05)", borderRadius: 2 }} />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-medium text-[#e5e2e1]">Classic Smash</div>
-                      <div className="text-[10px] text-[#e5e2e1]/70">Burger</div>
-                    </div>
-                    <div className="text-sm font-bold text-[#aad0af]">$14.99</div>
-                  </div>
-                </div>
-              </motion.div>
+            {/* Footer row: Dish name + Sage price */}
+            <div className="flex items-center justify-between text-xs pt-1 border-t border-white/5">
+              <span className="font-medium text-ink truncate max-w-[100px]">Artisan Burger</span>
+              <span className="font-bold text-sage">$24.00</span>
             </div>
-
-          </div>{/* close inner wrapper */}
-        </div>
-
-        {/* ── Scroll Indicator ── */}
-        <div ref={scrollTextRef} className="flex flex-col items-center gap-2 py-8">
-          <span className="text-[11px] tracking-[0.2em] font-medium text-[#e5e2e1]/35">SCROLL</span>
-          <motion.div animate={{ y: [0, 6, 0] }}
-            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}>
-            <svg className="w-4 h-4" fill="none" stroke="rgba(229,226,225,0.3)" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 14l-7 7m0 0l-7-7" />
-            </svg>
           </motion.div>
+
+          {/* Left Floating Stat Chip (Rating & Scan Count) */}
+          <motion.div
+            style={{
+              x: cardTranslateX,
+              y: cardTranslateY,
+            }}
+            className="hidden sm:flex absolute left-6 bottom-8 z-30 flex-col gap-2 p-3.5 rounded-2xl bg-surface-elevated/80 backdrop-blur-xl border border-white/10 shadow-glass"
+          >
+            <div className="flex items-center gap-2">
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <span className="text-xs font-bold text-ink">4.9 / 5.0</span>
+              <span className="text-[10px] text-ink-muted">(1,240 scans)</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[11px] font-mono text-sage">
+              <Zap className="w-3 h-3" />
+              <span>+25% Order Upsell Rate</span>
+            </div>
+          </motion.div>
+
+          {/* Bottom Interactive Rotation Hint */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 rounded-full bg-black/50 border border-white/5 text-[10px] font-mono text-ink-muted pointer-events-none">
+            <RotateCcw className="w-3 h-3 text-sage animate-spin" />
+            <span>DRAG TO ROTATE 360° // TAP QR FOR WEBAR</span>
+          </div>
         </div>
 
-        {/* Extra scroll space for demo */}
-        <div style={{ height: "80vh" }} />
-      </div>
+        {/* Bottom Control Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/10 text-xs text-ink-muted">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-sage" />
+              <span>iOS Quick Look (USDZ)</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-sage" />
+              <span>Android Chrome (WebXR / GLB)</span>
+            </span>
+          </div>
+          <div className="text-[11px] font-mono text-sage">
+            3D MODEL WEIGHT: 2.8 MB (Optimized for 4G/5G)
+          </div>
+        </div>
+      </motion.div>
 
-      {/* ── Film Grain Overlay (fixed) ── */}
-      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 45,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E")`,
-        backgroundRepeat: "repeat", opacity: 0.35, mixBlendMode: "overlay" }} />
+      {/* ========================================================================= */}
+      {/* INTERACTIVE WEBAR SIMULATOR MODAL */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {arModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl"
+            onClick={() => setArModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-md w-full p-6 sm:p-8 rounded-3xl bg-[rgba(26,29,33,0.95)] border border-white/15 shadow-2xl text-center"
+            >
+              <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-sage/15 flex items-center justify-center text-sage">
+                <Smartphone className="w-6 h-6" />
+              </div>
+
+              <h3 className="text-xl font-bold text-ink mb-2">
+                Live WebAR Dining Demo
+              </h3>
+              <p className="text-xs text-ink-soft mb-6">
+                Point your phone camera at this QR code to launch the real-size 3D dish on your
+                table instantly.
+              </p>
+
+              {/* Scannable High-Res QR Frame */}
+              <div className="relative p-6 rounded-2xl bg-white mx-auto w-56 h-56 flex flex-col items-center justify-center shadow-lg mb-6">
+                <img
+                  src="/brand/dish360 logo.png"
+                  alt="Dish360 AR QR"
+                  className="w-36 h-36 object-contain"
+                />
+                <span className="text-[10px] font-bold text-charcoal uppercase tracking-widest mt-2">
+                  DISH360 WEBAR LAUNCH
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-center gap-2 text-xs text-sage font-mono">
+                  <span className="w-2 h-2 rounded-full bg-sage animate-ping" />
+                  <span>Compatible with iPhone Safari & Android Chrome</span>
+                </div>
+                <button
+                  onClick={() => setArModalOpen(false)}
+                  className="mt-4 w-full py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-ink font-semibold text-xs transition-colors"
+                >
+                  Close Preview
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
