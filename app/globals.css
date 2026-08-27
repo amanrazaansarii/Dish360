@@ -7,11 +7,11 @@
   --bg-surface: rgba(30, 34, 38, 0.65);
   --bg-surface-elevated: rgba(32, 36, 40, 0.75);
   --text-primary: #e5e2e1;
-  --text-secondary: rgba(229, 226, 225, 0.6);
+  --text-secondary: rgba(229, 226, 225, 0.65);
   --text-muted: rgba(229, 226, 225, 0.4);
   --accent: #aad0af;
   --accent-solid: #8fb495;
-  --accent-glow: rgba(170, 208, 175, 0.25);
+  --accent-glow: rgba(170, 208, 175, 0.35);
   --border-subtle: rgba(255, 255, 255, 0.06);
   --border-light: rgba(255, 255, 255, 0.1);
 }
@@ -20,7 +20,7 @@ html {
   scroll-behavior: smooth;
   background-color: #131313;
   color: #e5e2e1;
-  font-family: var(--font-inter), 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
 }
 
@@ -33,6 +33,7 @@ body {
   position: relative;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* Custom Selection */
@@ -57,23 +58,86 @@ body {
   background: rgba(170, 208, 175, 0.4);
 }
 
-/* Halftone Text Signatures */
-.text-halftone {
-  background-image: radial-gradient(circle, #e5e2e1 35%, transparent 40%);
-  background-size: 6px 6px;
-  color: transparent;
+/* Tabular Numbers for Accurate Data Alignment */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Luxury Editorial Serif Accents */
+.font-serif-luxury {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Micro-Eyebrow Badge */
+.eyebrow-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: rgba(229, 226, 225, 0.65);
+}
+
+/* ========================================================================= */
+/* LUMINOUS HIGH-CONTRAST SAGE TYPOGRAPHY & ACCENT HIGHLIGHTS                */
+/* Replaces low-visibility halftone dots with crystal-clear glowing shaders  */
+/* ========================================================================= */
+
+.text-sage-luminous {
+  background: linear-gradient(180deg, #FFFFFF 0%, #C4E9C8 30%, #8FB495 100%);
   -webkit-background-clip: text;
   background-clip: text;
+  color: transparent;
+  display: inline-block;
+  font-weight: 900;
+  filter: drop-shadow(0 0 25px rgba(170, 208, 175, 0.55)) drop-shadow(0 2px 4px rgba(0,0,0,0.85));
+}
+
+.text-glow-sage {
+  color: #AAD0AF;
+  text-shadow: 0 0 24px rgba(170, 208, 175, 0.6), 0 0 45px rgba(170, 208, 175, 0.25);
+  font-weight: 900;
   display: inline-block;
 }
 
+/* Highlighting Glass Capsule Pill for Key Focus Words */
+.highlight-pill-sage {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  padding: 0.08em 0.35em;
+  margin: 0 0.1em;
+  border-radius: 0.35em;
+  background: linear-gradient(180deg, rgba(170, 208, 175, 0.14) 0%, rgba(143, 180, 149, 0.06) 100%);
+  border: 1px solid rgba(170, 208, 175, 0.3);
+  box-shadow: 0 0 30px rgba(170, 208, 175, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  vertical-align: baseline;
+}
+
+/* Backward-compatible high-contrast alias for text-halftone-accent */
 .text-halftone-accent {
-  background-image: radial-gradient(circle, #aad0af 35%, transparent 40%);
-  background-size: 6px 6px;
-  color: transparent;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C4E9C8 30%, #8FB495 100%);
   -webkit-background-clip: text;
   background-clip: text;
+  color: transparent;
   display: inline-block;
+  font-weight: 900;
+  filter: drop-shadow(0 0 25px rgba(170, 208, 175, 0.55)) drop-shadow(0 2px 4px rgba(0,0,0,0.85));
+}
+
+.text-halftone {
+  background: linear-gradient(180deg, #FFFFFF 0%, #E5E2E1 50%, #B8B5B4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+  font-weight: 900;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
 }
 
 /* Glassmorphism & Translucent Surfaces */

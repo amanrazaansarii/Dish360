@@ -41,11 +41,11 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400;1,6..72,600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="bg-background text-ink antialiased selection:bg-sage/20 selection:text-white relative min-h-screen">
+      <body className="bg-background text-ink font-sans antialiased selection:bg-sage/25 selection:text-white relative min-h-screen">
         {/* Global SVG Filters for Headline Gaussian Depth of Field & Halftones */}
         <svg
           className="pointer-events-none absolute w-0 h-0 overflow-hidden"
@@ -75,7 +75,7 @@ export default function RootLayout({
 
         {/* Cinematic Film Grain Overlay */}
         <div
-          className="pointer-events-none fixed inset-0 z-40 opacity-[0.035] mix-blend-overlay"
+          className="pointer-events-none fixed inset-0 z-40 opacity-[0.03] mix-blend-overlay"
           style={{
             backgroundImage: `radial-gradient(rgba(255,255,255,0.15) 1px, transparent 0)`,
             backgroundSize: "24px 24px",

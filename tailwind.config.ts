@@ -17,7 +17,7 @@ const config: Config = {
         },
         ink: {
           DEFAULT: "#E5E2E1",
-          soft: "rgba(229, 226, 225, 0.6)",
+          soft: "rgba(229, 226, 225, 0.65)",
           muted: "rgba(229, 226, 225, 0.4)",
         },
         sage: {
@@ -32,10 +32,21 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "'Plus Jakarta Sans'", "sans-serif"],
-        heading: ["var(--font-inter)", "sans-serif"],
-        serif: ["'Instrument Serif'", "'Playfair Display'", "serif"],
-        mono: ["'JetBrains Mono'", "monospace"],
+        sans: ["'Plus Jakarta Sans'", "'Barlow'", "system-ui", "-apple-system", "sans-serif"],
+        body: ["'Plus Jakarta Sans'", "'Barlow'", "sans-serif"],
+        heading: ["'Instrument Serif'", "'Playfair Display'", "Georgia", "serif"],
+        serif: ["'Instrument Serif'", "'Playfair Display'", "'Newsreader'", "Georgia", "serif"],
+        editorial: ["'Instrument Serif'", "Georgia", "serif"],
+        display: ["'Plus Jakarta Sans'", "'Syne'", "sans-serif"],
+        mono: ["'JetBrains Mono'", "'SF Mono'", "monospace"],
+      },
+      letterSpacing: {
+        tighter: "-0.04em",
+        tight: "-0.02em",
+        normal: "0em",
+        wide: "0.05em",
+        wider: "0.15em",
+        widest: "0.25em",
       },
       boxShadow: {
         glass: "0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)",

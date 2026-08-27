@@ -7,7 +7,6 @@ import {
   QrCode,
   Smartphone,
   CheckCircle2,
-  ArrowRight,
   Sparkles,
   Zap,
 } from "lucide-react";
@@ -33,13 +32,13 @@ export default function WorkflowSection() {
           <div className="w-20 h-20 rounded-2xl bg-white/5 border border-dashed border-white/20 flex flex-col items-center justify-center mb-4 group hover:border-sage transition-colors">
             <Upload className="w-8 h-8 text-sage animate-bounce" />
           </div>
-          <div className="text-sm font-semibold text-ink mb-1">
+          <div className="text-sm font-bold text-ink mb-1 tracking-tight">
             Drag & Drop Dish Photo
           </div>
-          <div className="text-xs text-ink-muted">
-            Uploaded: <span className="text-sage">truffle-burger-photo.jpg</span> (4.2 MB)
+          <div className="text-xs text-ink-muted font-light">
+            Uploaded: <span className="text-sage font-mono">truffle-burger-photo.jpg</span> (4.2 MB)
           </div>
-          <div className="mt-4 px-3 py-1 rounded-full bg-sage/15 text-[11px] font-mono text-sage">
+          <div className="mt-4 px-3.5 py-1 rounded-full bg-sage/15 text-[11px] font-mono text-sage">
             ✓ Exif & Lighting Balanced
           </div>
         </div>
@@ -62,14 +61,14 @@ export default function WorkflowSection() {
             <div className="absolute inset-0 rounded-full border-2 border-dashed border-sage/40 animate-spin" />
             <Sparkles className="w-10 h-10 text-sage" />
           </div>
-          <div className="text-sm font-semibold text-ink mb-1">
+          <div className="text-sm font-bold text-ink mb-1 tracking-tight">
             Reconstructing Volumetric Food Mesh
           </div>
           <div className="text-xs font-mono text-sage flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-sage animate-ping" />
             <span>USDZ & GLB Optimization (60 FPS)</span>
           </div>
-          <div className="mt-4 flex items-center gap-2 text-[10px] text-ink-muted font-mono">
+          <div className="mt-4 flex items-center gap-2 text-[10px] text-ink-muted font-mono tabular-nums">
             <span>Vertices: 18,400</span>
             <span>·</span>
             <span>PBR Texture: 2K</span>
@@ -94,7 +93,7 @@ export default function WorkflowSection() {
             <div className="w-6 h-6 mx-auto mb-2 rounded-full bg-white/10 flex items-center justify-center">
               <QrCode className="w-3.5 h-3.5 text-sage" />
             </div>
-            <div className="text-[11px] font-bold text-ink mb-2">TABLE 08 · DISH360</div>
+            <div className="text-[11px] font-bold text-ink mb-2 font-mono">TABLE 08 · DISH360</div>
             <div className="w-24 h-24 mx-auto p-1.5 rounded-lg bg-white mb-2 flex items-center justify-center">
               <img
                 src="/brand/dish360 logo.png"
@@ -102,7 +101,7 @@ export default function WorkflowSection() {
                 className="w-20 h-20 object-contain"
               />
             </div>
-            <div className="text-[9px] font-mono text-sage uppercase">
+            <div className="text-[9px] font-mono text-sage uppercase tracking-wider">
               SCAN TO VIEW 3D MENU
             </div>
           </div>
@@ -125,13 +124,13 @@ export default function WorkflowSection() {
           <div className="w-16 h-16 rounded-2xl bg-sage/20 flex items-center justify-center mb-4 text-sage">
             <Smartphone className="w-8 h-8" />
           </div>
-          <div className="text-sm font-semibold text-ink mb-1">
+          <div className="text-sm font-bold text-ink mb-1 tracking-tight">
             Instant True-to-Scale Table View
           </div>
-          <div className="text-xs text-ink-soft max-w-xs mb-3">
+          <div className="text-xs text-ink-soft max-w-xs mb-3 font-light leading-relaxed">
             Diners inspect dish portions, ingredients, and allergen alerts in real physical dimensions.
           </div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-semibold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-semibold font-mono tabular-nums">
             <Zap className="w-3 h-3" />
             <span>+25% Average Order Value Uplift</span>
           </div>
@@ -144,15 +143,24 @@ export default function WorkflowSection() {
     <section id="workflow" className="relative py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-16">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-white/10 text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-white/10 mb-4">
           <Sparkles className="w-3.5 h-3.5 text-sage" />
-          <span>Frictionless 4-Step Pipeline</span>
+          <span className="eyebrow-label text-ink-soft">Frictionless 4-Step Pipeline</span>
         </div>
-        <h2 className="text-3xl sm:text-5xl font-black text-ink tracking-tight mb-4">
-          From kitchen photo to{" "}
-          <span className="text-sage text-halftone-accent">WebAR table</span> in seconds.
+        <h2 className="text-3xl sm:text-5xl font-black text-ink tracking-[-0.03em] leading-tight mb-4">
+          From{" "}
+          <span className="font-serif-luxury font-normal text-white">
+            kitchen photo
+          </span>{" "}
+          to{" "}
+          <span className="highlight-pill-sage">
+            <span className="text-sage-luminous">
+              WebAR table
+            </span>
+          </span>{" "}
+          in seconds.
         </h2>
-        <p className="text-ink-soft text-sm sm:text-base font-light max-w-xl mx-auto">
+        <p className="text-ink-soft text-sm sm:text-base font-light max-w-xl mx-auto leading-relaxed">
           No 3D artists, no costly lidar scanners, no guest apps. Dish360 automates the entire
           pipeline for busy restaurants.
         </p>
@@ -179,7 +187,7 @@ export default function WorkflowSection() {
                 <div className="flex items-start gap-4">
                   {/* Step Number & Icon */}
                   <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-mono transition-colors ${
                       isSelected
                         ? "bg-sage text-charcoal font-bold shadow-sage-glow"
                         : "bg-white/5 text-ink-muted"
@@ -191,7 +199,7 @@ export default function WorkflowSection() {
                   {/* Step Copy */}
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] font-mono text-sage uppercase tracking-wider">
+                      <span className="text-[11px] font-mono text-sage uppercase tracking-wider tabular-nums">
                         STEP {step.stepNumber} · {step.badge}
                       </span>
                       {isSelected && (
@@ -200,7 +208,7 @@ export default function WorkflowSection() {
                         </span>
                       )}
                     </div>
-                    <h3 className="text-base sm:text-lg font-bold text-ink mb-1">
+                    <h3 className="text-base sm:text-lg font-bold text-ink mb-1 tracking-tight">
                       {step.title}
                     </h3>
                     <p className="text-xs sm:text-sm text-ink-soft font-light leading-relaxed">
@@ -226,7 +234,7 @@ export default function WorkflowSection() {
                   DISH360_PIPELINE // STAGE {steps[activeStep].stepNumber}
                 </span>
               </div>
-              <div className="text-[10px] font-mono text-sage">
+              <div className="text-[10px] font-mono text-sage tabular-nums">
                 {steps[activeStep].metrics}
               </div>
             </div>
@@ -253,7 +261,7 @@ export default function WorkflowSection() {
                 onClick={() =>
                   setActiveStep((prev) => (prev > 0 ? prev - 1 : steps.length - 1))
                 }
-                className="px-3 py-1 rounded-full text-xs text-ink-muted hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
+                className="px-3 py-1 rounded-full text-xs font-medium text-ink-muted hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
               >
                 Previous
               </button>
@@ -273,7 +281,7 @@ export default function WorkflowSection() {
                 onClick={() =>
                   setActiveStep((prev) => (prev < steps.length - 1 ? prev + 1 : 0))
                 }
-                className="px-3 py-1 rounded-full text-xs font-semibold text-charcoal bg-sage hover:bg-sage-solid transition-colors"
+                className="px-3.5 py-1 rounded-full text-xs font-semibold text-charcoal bg-sage hover:bg-sage-solid transition-colors"
               >
                 Next Step
               </button>

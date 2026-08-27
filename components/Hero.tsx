@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   Sparkles,
   Smartphone,
   Eye,
   Layers,
   RotateCcw,
-  Maximize2,
   CheckCircle2,
   Zap,
   ArrowRight,
@@ -82,7 +81,7 @@ export default function Hero() {
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="relative min-h-screen pt-32 pb-20 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center overflow-hidden"
+      className="relative min-h-[100dvh] pt-32 pb-20 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center overflow-hidden"
     >
       {/* Background Soft Glow Radial Spotlight */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] bg-gradient-to-tr from-sage/10 via-slate-800/10 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
@@ -92,27 +91,32 @@ export default function Hero() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-white/10 shadow-glass mb-6"
+        className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-surface border border-white/10 shadow-glass mb-6"
       >
         <span className="flex h-2 w-2 rounded-full bg-sage animate-pulse" />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-soft">
-          Next-Gen WebAR Dining Engine
+        <span className="eyebrow-label text-ink-soft">
+          Augmented Dining Infrastructure
         </span>
       </motion.div>
 
-      {/* Hero Headline with Halftone and Gaussian Depth Effects */}
+      {/* Hero Headline with Luxury Editorial Typography */}
       <motion.div
         initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
         animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
         transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
         className="text-center max-w-4xl mx-auto mb-6"
       >
-        <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-[5.2rem] font-black tracking-tight leading-[1.05] text-ink">
-          Menus are no longer <span className="text-halftone font-black">paper</span>.
-          <br />
+        <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-[5.4rem] font-black tracking-[-0.035em] leading-[1.08] text-ink">
+          Menus are no longer{" "}
+          <span className="font-serif-luxury font-normal text-white drop-shadow-[0_2px_12px_rgba(255,255,255,0.15)]">
+            paper
+          </span>
+          .<br className="hidden sm:inline" />{" "}
           They are{" "}
-          <span className="text-sage text-halftone-accent font-black">
-            living 3D tables
+          <span className="highlight-pill-sage">
+            <span className="text-sage-luminous tracking-tight">
+              living 3D tables
+            </span>
           </span>
           .
         </h1>
@@ -123,7 +127,7 @@ export default function Hero() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="text-base sm:text-lg md:text-xl font-light text-ink-soft max-w-2xl text-center mb-10 leading-relaxed"
+        className="text-base sm:text-lg md:text-xl font-light text-ink-soft max-w-2xl text-center mb-10 leading-[1.65]"
       >
         Replace flat photos and PDFs with true-to-scale WebAR dishes. Diners scan a table QR
         standee to view food in augmented reality —{" "}
@@ -139,7 +143,7 @@ export default function Hero() {
       >
         <button
           onClick={() => setArModalOpen(true)}
-          className="group relative inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-sage-solid hover:bg-sage text-charcoal font-semibold text-sm shadow-[0_4px_20px_rgba(143,180,149,0.35)] hover:shadow-[0_8px_30px_rgba(143,180,149,0.55)] transition-all duration-300 hover:scale-105 active:scale-95"
+          className="group relative inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-sage-solid hover:bg-sage text-charcoal font-semibold text-xs tracking-wide shadow-[0_4px_20px_rgba(143,180,149,0.35)] hover:shadow-[0_8px_30px_rgba(143,180,149,0.55)] transition-all duration-300 hover:scale-105 active:scale-95"
         >
           <QrCode className="w-4 h-4" />
           <span>Scan Live WebAR Demo</span>
@@ -148,7 +152,7 @@ export default function Hero() {
 
         <a
           href="#studio"
-          className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-surface hover:bg-white/10 text-ink hover:text-white font-medium text-sm border border-white/10 shadow-glass transition-all duration-200 hover:border-white/20"
+          className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-surface hover:bg-white/10 text-ink hover:text-white font-medium text-xs tracking-wide border border-white/10 shadow-glass transition-all duration-200 hover:border-white/20"
         >
           <Sparkles className="w-4 h-4 text-sage" />
           <span>Launch 3D Menu Builder</span>
@@ -172,7 +176,7 @@ export default function Hero() {
         {/* Top Viewport Header HUD */}
         <div className="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 border border-white/5 text-[11px] font-mono text-sage">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 border border-white/5 text-[11px] font-mono tabular-nums text-sage">
               <span className="w-1.5 h-1.5 rounded-full bg-sage animate-ping" />
               <span>LIVE_WEBAR_VIEWPORT // 60 FPS</span>
             </div>
@@ -185,7 +189,7 @@ export default function Hero() {
           <div className="flex items-center gap-1.5 p-1 rounded-full bg-black/40 border border-white/10">
             <button
               onClick={() => setActiveViewMode("textured")}
-              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all ${
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium tracking-wide transition-all ${
                 activeViewMode === "textured"
                   ? "bg-sage text-charcoal shadow-sm font-semibold"
                   : "text-ink-soft hover:text-white"
@@ -197,7 +201,7 @@ export default function Hero() {
 
             <button
               onClick={() => setActiveViewMode("wireframe")}
-              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all ${
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium tracking-wide transition-all ${
                 activeViewMode === "wireframe"
                   ? "bg-sage text-charcoal shadow-sm font-semibold"
                   : "text-ink-soft hover:text-white"
@@ -209,7 +213,7 @@ export default function Hero() {
 
             <button
               onClick={() => setHudPinned(!hudPinned)}
-              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-all ${
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium tracking-wide transition-all ${
                 hudPinned ? "bg-white/15 text-white" : "text-ink-muted hover:text-white"
               }`}
             >
@@ -272,26 +276,22 @@ export default function Hero() {
                   <circle cx="135" cy="100" r="3" fill="#AAD0AF" />
                   <circle cx="100" cy="130" r="3" fill="#AAD0AF" />
                 </svg>
-                <div className="absolute bottom-2 px-3 py-1 rounded-full bg-sage/20 border border-sage/40 text-[10px] font-mono text-sage">
+                <div className="absolute bottom-2 px-3 py-1 rounded-full bg-sage/20 border border-sage/40 text-[10px] font-mono tabular-nums text-sage">
                   POLYGON_MESH // 14,280 VERTS
                 </div>
               </div>
             ) : (
               /* Photorealistic Textured 3D Dish Viewport */
               <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
-                {/* Photoreal Burger Illustration / Render with Glass Plate */}
-                <div className="relative w-full h-full flex items-center justify-center drop-shadow-[0_25px_40px_rgba(0,0,0,0.85)]">
-                  {/* Plate Reflection Disc */}
-                  <div className="absolute bottom-4 w-60 h-20 bg-gradient-to-t from-white/10 via-transparent to-transparent rounded-full blur-sm" />
+                {/* Plate Reflection Disc */}
+                <div className="absolute bottom-4 w-60 h-20 bg-gradient-to-t from-white/10 via-transparent to-transparent rounded-full blur-sm" />
 
-                  {/* 3D Composite Dish Visual (Gourmet Brioche Bun, Wagyu Patty, Truffle Glaze, Melted Aged Cheddar) */}
-                  <div className="relative w-56 sm:w-72 h-56 sm:h-72 rounded-full overflow-hidden flex items-center justify-center">
-                    <img
-                      src="/brand/dish360 logo.png"
-                      alt="3D Dish360 WebAR Dish"
-                      className="w-48 sm:w-60 h-48 sm:h-60 object-contain drop-shadow-[0_15px_30px_rgba(170,208,175,0.3)] animate-float"
-                    />
-                  </div>
+                <div className="relative w-56 sm:w-72 h-56 sm:h-72 rounded-full overflow-hidden flex items-center justify-center">
+                  <img
+                    src="/brand/dish360 logo.png"
+                    alt="3D Dish360 WebAR Dish"
+                    className="w-48 sm:w-60 h-48 sm:h-60 object-contain drop-shadow-[0_15px_30px_rgba(170,208,175,0.3)] animate-float"
+                  />
                 </div>
               </div>
             )}
@@ -302,7 +302,7 @@ export default function Hero() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="absolute -top-4 -left-6 sm:left-4 z-20 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-elevated/90 border border-white/10 shadow-glass backdrop-blur-md"
+                  className="absolute -top-4 -left-6 sm:left-4 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-surface-elevated/90 border border-white/10 shadow-glass backdrop-blur-md"
                 >
                   <div className="w-5 h-5 rounded-full bg-sage/20 flex items-center justify-center">
                     <Flame className="w-3 h-3 text-sage" />
@@ -311,7 +311,7 @@ export default function Hero() {
                     <div className="text-[10px] text-ink-muted uppercase tracking-wider font-mono">
                       Energy
                     </div>
-                    <div className="text-xs font-bold text-ink">520 kcal</div>
+                    <div className="text-xs font-bold text-ink font-mono tabular-nums">520 kcal</div>
                   </div>
                 </motion.div>
 
@@ -319,14 +319,14 @@ export default function Hero() {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.1 }}
-                  className="absolute bottom-8 -right-4 sm:right-6 z-20 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-elevated/90 border border-white/10 shadow-glass backdrop-blur-md"
+                  className="absolute bottom-8 -right-4 sm:right-6 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-surface-elevated/90 border border-white/10 shadow-glass backdrop-blur-md"
                 >
                   <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
                     <ShieldCheck className="w-3 h-3 text-emerald-400" />
                   </div>
                   <div className="text-left">
                     <div className="text-[10px] text-ink-muted uppercase tracking-wider font-mono">
-                      Ingredients
+                      Culinary Spec
                     </div>
                     <div className="text-xs font-bold text-ink">A5 Wagyu · Truffle</div>
                   </div>
@@ -336,7 +336,7 @@ export default function Hero() {
           </div>
 
           {/* ========================================================================= */}
-          {/* THE TRANSLUCENT FUTURISTIC QR CARD (NON-NEGOTIABLE DESIGN SPEC §7) */}
+          {/* THE TRANSLUCENT FUTURISTIC QR CARD (DESIGN SPEC §7) */}
           {/* ========================================================================= */}
           <motion.div
             style={{
@@ -359,7 +359,7 @@ export default function Hero() {
               </div>
             </div>
 
-            {/* Inset QR Matrix (5x5 matrix with Sage on-cells) */}
+            {/* Inset QR Matrix */}
             <div className="p-2 rounded-xl bg-black/40 border border-white/5 mb-3 flex items-center justify-center">
               <div className="grid grid-cols-5 gap-1 w-24 h-24 p-1">
                 {[
@@ -381,7 +381,7 @@ export default function Hero() {
             {/* Footer row: Dish name + Sage price */}
             <div className="flex items-center justify-between text-xs pt-1 border-t border-white/5">
               <span className="font-medium text-ink truncate max-w-[100px]">Artisan Burger</span>
-              <span className="font-bold text-sage">$24.00</span>
+              <span className="font-bold text-sage font-mono tabular-nums">$24.00</span>
             </div>
           </motion.div>
 
@@ -395,17 +395,17 @@ export default function Hero() {
           >
             <div className="flex items-center gap-2">
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-              <span className="text-xs font-bold text-ink">4.9 / 5.0</span>
-              <span className="text-[10px] text-ink-muted">(1,240 scans)</span>
+              <span className="text-xs font-bold text-ink font-mono tabular-nums">4.9 / 5.0</span>
+              <span className="text-[10px] text-ink-muted font-mono tabular-nums">(1,240 scans)</span>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] font-mono text-sage">
+            <div className="flex items-center gap-1.5 text-[11px] font-mono tabular-nums text-sage">
               <Zap className="w-3 h-3" />
               <span>+25% Order Upsell Rate</span>
             </div>
           </motion.div>
 
           {/* Bottom Interactive Rotation Hint */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 rounded-full bg-black/50 border border-white/5 text-[10px] font-mono text-ink-muted pointer-events-none">
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 rounded-full bg-black/50 border border-white/5 text-[10px] font-mono tabular-nums text-ink-muted pointer-events-none">
             <RotateCcw className="w-3 h-3 text-sage animate-spin" />
             <span>DRAG TO ROTATE 360° // TAP QR FOR WEBAR</span>
           </div>
@@ -423,15 +423,13 @@ export default function Hero() {
               <span>Android Chrome (WebXR / GLB)</span>
             </span>
           </div>
-          <div className="text-[11px] font-mono text-sage">
-            3D MODEL WEIGHT: 2.8 MB (Optimized for 4G/5G)
+          <div className="text-[11px] font-mono tabular-nums text-sage">
+            3D MESH WEIGHT: 2.8 MB (Optimized for 4G/5G)
           </div>
         </div>
       </motion.div>
 
-      {/* ========================================================================= */}
-      {/* INTERACTIVE WEBAR SIMULATOR MODAL */}
-      {/* ========================================================================= */}
+      {/* Interactive WebAR Simulator Modal */}
       <AnimatePresence>
         {arModalOpen && (
           <motion.div
@@ -455,7 +453,7 @@ export default function Hero() {
               <h3 className="text-xl font-bold text-ink mb-2">
                 Live WebAR Dining Demo
               </h3>
-              <p className="text-xs text-ink-soft mb-6">
+              <p className="text-xs text-ink-soft mb-6 leading-relaxed font-light">
                 Point your phone camera at this QR code to launch the real-size 3D dish on your
                 table instantly.
               </p>
@@ -467,7 +465,7 @@ export default function Hero() {
                   alt="Dish360 AR QR"
                   className="w-36 h-36 object-contain"
                 />
-                <span className="text-[10px] font-bold text-charcoal uppercase tracking-widest mt-2">
+                <span className="text-[10px] font-bold text-charcoal uppercase tracking-widest mt-2 font-mono">
                   DISH360 WEBAR LAUNCH
                 </span>
               </div>
