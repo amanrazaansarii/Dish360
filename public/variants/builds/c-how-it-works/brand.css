@@ -1,0 +1,153 @@
+/* ============================================================================
+   Dish360 brand layer for scrollcraft builds.
+   Source of truth: Desktop/Dish360/design.md (dark glass system).
+   Loaded AFTER scrollcraft.css. It maps the brand onto the engine's six colour
+   roles and adds the few brand objects design.md makes non-negotiable:
+   the translucent QR card (§7), the glass recipe (§4), the difference-blend
+   cursor (§8), halftone type (§3) and the sage CTA (§9).
+   ========================================================================== */
+
+:root {
+  /* the six roles (design.md §2) */
+  --sc-canvas:      #131313;
+  --sc-surface:     #1e2226;
+  --sc-ink:         #e5e2e1;
+  --sc-ink-soft:    #9a9796;   /* text-secondary rgba(229,226,225,.6) resolved on #131313, 5.9:1 */
+  --sc-accent:      #aad0af;
+  --sc-accent-ink:  #131313;
+
+  /* brand extras */
+  --d360-muted:     #85827f;   /* text-muted, lifted to clear 4.5:1 on the canvas */
+  --d360-sage:      #8fb495;   /* accent-solid, CTA fill */
+  --d360-slate:     #2a3744;
+  --d360-glass:     rgba(30, 34, 38, 0.55);
+  --d360-glass-2:   rgba(32, 36, 40, 0.75);
+  --d360-blur:      blur(24px) saturate(1.3);
+  --d360-edge:      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --d360-shadow:    0 20px 60px rgba(0, 0, 0, 0.5);
+
+  --sc-font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --sc-font-text:    "Plus Jakarta Sans", system-ui, sans-serif;
+
+  --sc-shadow-color: 0 0% 2%;
+  --sc-hairline: rgba(255, 255, 255, 0.06);
+  --sc-hairline-strong: rgba(255, 255, 255, 0.1);
+}
+
+/* Light text on dark wants a touch more weight and air (taste.md, typography). */
+body { font-weight: 400; letter-spacing: 0; }
+.sc-display { font-weight: 800; }
+
+.sr-only {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ------------------------------------------------------------- glass (§4) */
+.glass {
+  background: var(--d360-glass);
+  -webkit-backdrop-filter: var(--d360-blur);
+  backdrop-filter: var(--d360-blur);
+  box-shadow: var(--d360-shadow), var(--d360-edge);
+}
+
+/* -------------------------------------------- the translucent QR card (§7)
+   Preserved exactly: 20px radius, rgba(30,34,38,.55), blur(24px) saturate(1.3),
+   0 20px 60px shadow with a lit top edge, sage-tinted icon chip, inset QR well,
+   sage "on" modules, sage price. Only change from the hero: the matrix is a real
+   QR code instead of a static 5x5 pattern, as design.md §7 asks for. */
+.qr-card {
+  width: var(--qr-w, 220px);
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(30, 34, 38, 0.55);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  backdrop-filter: blur(24px) saturate(1.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  color: var(--sc-ink);
+}
+.qr-card__head { display: flex; align-items: center; gap: 8px; }
+.qr-card__chip {
+  width: 28px; height: 28px; flex: none; border-radius: 8px;
+  display: grid; place-items: center;
+  background: rgba(170, 208, 175, 0.15); color: var(--sc-accent);
+}
+.qr-card__chip svg { width: 15px; height: 15px; }
+.qr-card__title { font-size: 0.875rem; font-weight: 600; line-height: 1.2; }
+.qr-card__cap { font-size: 0.7rem; color: rgba(229, 226, 225, 0.55); line-height: 1.3; }
+.qr-card__well {
+  aspect-ratio: 1; width: 100%;
+  border-radius: 12px; padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.qr-card__well svg { width: 100%; height: 100%; display: block; }
+.qr-card__well .qr-on  { fill: rgba(170, 208, 175, 0.62); }
+.qr-card__well .qr-off { fill: rgba(255, 255, 255, 0.035); }
+.qr-card__foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.qr-card__dish { font-size: 0.78rem; font-weight: 500; line-height: 1.25; }
+.qr-card__cat { font-size: 0.68rem; color: rgba(229, 226, 225, 0.7); }
+.qr-card__price { font-size: 0.9rem; font-weight: 700; color: var(--sc-accent); font-variant-numeric: tabular-nums; }
+
+/* -------------------------------------------------- halftone type (§3) */
+.text-halftone, .text-halftone-accent {
+  color: transparent;
+  -webkit-background-clip: text; background-clip: text;
+  background-size: var(--ht, 6px) var(--ht, 6px);
+}
+.text-halftone        { background-image: radial-gradient(circle, var(--sc-ink) 35%, transparent 40%); }
+.text-halftone-accent { background-image: radial-gradient(circle, var(--sc-accent) 35%, transparent 40%); }
+
+/* ---------------------------------------------------------- CTA (§9) */
+.btn-sage {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  white-space: nowrap;
+  padding: 10px 22px; border: 0; border-radius: 999px;
+  background: var(--d360-sage); color: #131313;
+  font: 600 0.95rem/1 var(--sc-font-text);
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(143, 180, 149, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: transform 160ms var(--sc-ease-out), box-shadow 160ms var(--sc-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-sage:hover { transform: scale(1.04); box-shadow: 0 6px 24px rgba(143, 180, 149, 0.4); }
+}
+.btn-sage:active { transform: scale(0.97); }
+.btn-sage:disabled { opacity: 0.5; transform: none; }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+  padding: 9px 16px; border-radius: 999px; border: 0;
+  background: rgba(255, 255, 255, 0.06); color: var(--sc-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  font: 500 0.85rem/1 var(--sc-font-text); text-decoration: none;
+  transition: background 160ms var(--sc-ease-out), transform 120ms var(--sc-ease-out);
+}
+@media (hover: hover) and (pointer: fine) { .btn-ghost:hover { background: rgba(255, 255, 255, 0.1); } }
+.btn-ghost:active { transform: scale(0.97); }
+
+/* ------------------------------------------------ custom cursor (§8)
+   Desktop only. Native cursor hidden except in text fields, where the caret
+   is the thing the reader needs. */
+html.has-brand-cursor, html.has-brand-cursor * { cursor: none !important; }
+html.has-brand-cursor :is(input[type="text"], input[type="number"], input:not([type]), textarea) { cursor: text !important; }
+.brand-cursor {
+  position: fixed; top: 0; left: 0; z-index: 9999;
+  width: 50px; height: 50px; margin: -25px 0 0 -25px;
+  border-radius: 50%; background: #fff; mix-blend-mode: difference;
+  pointer-events: none; opacity: 0; scale: 0.3;
+  transition: scale 250ms ease-in-out, opacity 250ms ease-in-out;
+  will-change: translate;
+}
+.brand-cursor.is-on { opacity: 1; }
+.brand-cursor.is-link { scale: 1; }
+.brand-cursor.is-down { scale: 0.22; }
+.brand-cursor.is-link.is-down { scale: 0.85; }
+
+/* ------------------------------------------------ AR surface ground */
+.brand-ground { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.brand-ground--local { position: absolute; }
+
+/* grain is the engine's .sc-grain, kept very light */
+.sc-grain { opacity: 0.035; z-index: 45; }  /* no blend mode: a full-screen overlay blend is costly on integrated GPUs */
