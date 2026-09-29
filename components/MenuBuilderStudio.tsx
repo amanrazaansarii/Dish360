@@ -3,19 +3,15 @@
 import React, { useState } from "react";
 import {
   Box,
-  Sliders,
   Sun,
   Layers,
   Rotate3d,
   Download,
   QrCode,
-  Sparkles,
   Check,
-  Flame,
   FileCode,
-  Share2,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface DishPreset {
   id: string;
@@ -97,14 +93,17 @@ export default function MenuBuilderStudio() {
 
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-16">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-white/10 text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-white/10 mb-4">
           <Box className="w-3.5 h-3.5 text-sage" />
-          <span>The Engineered Peak</span>
+          <span className="eyebrow-label text-ink-soft">The Engineered Peak</span>
         </div>
-        <h2 className="text-3xl sm:text-5xl font-black text-ink tracking-tight mb-4">
-          Interactive <span className="text-sage text-halftone-accent">3D Menu Studio</span>
+        <h2 className="text-3xl sm:text-5xl font-black text-ink tracking-[-0.03em] leading-tight mb-4">
+          <span className="font-serif-luxury font-normal text-white">Interactive</span>{" "}
+          <span className="highlight-pill-sage">
+            <span className="text-sage-luminous">3D Menu Studio</span>
+          </span>
         </h2>
-        <p className="text-ink-soft text-sm sm:text-base font-light max-w-xl mx-auto">
+        <p className="text-ink-soft text-sm sm:text-base font-light max-w-xl mx-auto leading-relaxed">
           Test drive how restaurant managers configure lighting, dish sizing, nutritional HUDs,
           and export QR standees in real time.
         </p>
@@ -121,11 +120,11 @@ export default function MenuBuilderStudio() {
             <div>
               <div className="text-sm font-bold text-ink flex items-center gap-2">
                 <span>Dish360 Creator Studio</span>
-                <span className="px-2 py-0.5 rounded-full bg-sage/20 text-sage text-[10px] font-mono">
-                  LIVE ENGINE v4.2
+                <span className="px-2 py-0.5 rounded-full bg-sage/20 text-sage text-[10px] font-mono tabular-nums">
+                  ENGINE v4.2
                 </span>
               </div>
-              <div className="text-xs text-ink-muted">
+              <div className="text-xs text-ink-muted font-mono">
                 Active Project: {restaurantName} · Table #{tableNumber}
               </div>
             </div>
@@ -155,11 +154,11 @@ export default function MenuBuilderStudio() {
           <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between relative border-b lg:border-b-0 lg:border-r border-white/10 min-h-[440px] bg-gradient-to-b from-black/50 to-black/80">
             {/* Viewport HUD Overlays */}
             <div className="flex items-center justify-between z-10">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/60 border border-white/10 text-[11px] font-mono text-ink-muted">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/60 border border-white/10 text-[11px] font-mono tabular-nums text-ink-muted">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>{selectedPreset.polygonCount}</span>
               </div>
-              <div className="text-xs font-semibold text-sage bg-sage/15 px-3 py-1 rounded-full border border-sage/30">
+              <div className="text-xs font-bold text-sage bg-sage/15 px-3 py-1 rounded-full border border-sage/30 font-mono tabular-nums">
                 {selectedPreset.price}
               </div>
             </div>
@@ -219,14 +218,14 @@ export default function MenuBuilderStudio() {
 
               {/* Dish Meta Tag */}
               <div className="mt-4 text-center z-10">
-                <div className="text-base font-bold text-ink">{selectedPreset.name}</div>
-                <div className="text-xs text-ink-muted mt-0.5">{selectedPreset.description}</div>
+                <div className="text-base font-bold text-ink tracking-tight">{selectedPreset.name}</div>
+                <div className="text-xs text-ink-muted mt-0.5 font-light">{selectedPreset.description}</div>
               </div>
             </div>
 
             {/* Bottom Viewport Angle Control Slider */}
             <div className="flex items-center gap-4 z-10 pt-4 border-t border-white/10">
-              <span className="text-xs font-mono text-ink-muted whitespace-nowrap flex items-center gap-1.5">
+              <span className="text-xs font-mono tabular-nums text-ink-muted whitespace-nowrap flex items-center gap-1.5">
                 <Rotate3d className="w-3.5 h-3.5 text-sage" />
                 <span>Rotation ({rotation}°)</span>
               </span>
@@ -264,8 +263,8 @@ export default function MenuBuilderStudio() {
                         : "bg-white/5 border-white/5 text-ink-muted hover:text-white"
                     }`}
                   >
-                    <div className="text-xs font-medium">{item.label}</div>
-                    <div className="text-[10px] font-mono text-ink-muted mt-0.5">{item.temp}</div>
+                    <div className="text-xs font-semibold">{item.label}</div>
+                    <div className="text-[10px] font-mono tabular-nums text-ink-muted mt-0.5">{item.temp}</div>
                   </button>
                 ))}
               </div>
@@ -323,11 +322,11 @@ export default function MenuBuilderStudio() {
                     type="text"
                     value={tableNumber}
                     onChange={(e) => setTableNumber(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-ink focus:outline-none focus:border-sage"
+                    className="w-full px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-mono text-ink focus:outline-none focus:border-sage"
                   />
                 </div>
               </div>
-              <div className="text-[11px] text-ink-muted flex items-center gap-1.5">
+              <div className="text-[11px] text-ink-muted flex items-center gap-1.5 font-mono">
                 <Check className="w-3 h-3 text-sage" />
                 <span>QR encoded for {restaurantName} - Table #{tableNumber}</span>
               </div>
@@ -346,14 +345,14 @@ export default function MenuBuilderStudio() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleExport("usdz")}
-                  className="flex-1 py-2 px-3 rounded-full bg-white/5 hover:bg-white/10 text-ink text-xs font-medium border border-white/10 flex items-center justify-center gap-1.5 transition-colors"
+                  className="flex-1 py-2 px-3 rounded-full bg-white/5 hover:bg-white/10 text-ink text-xs font-medium border border-white/10 flex items-center justify-center gap-1.5 transition-colors font-mono"
                 >
                   <FileCode className="w-3.5 h-3.5 text-sage" />
                   <span>Export USDZ</span>
                 </button>
                 <button
                   onClick={() => handleExport("glb")}
-                  className="flex-1 py-2 px-3 rounded-full bg-white/5 hover:bg-white/10 text-ink text-xs font-medium border border-white/10 flex items-center justify-center gap-1.5 transition-colors"
+                  className="flex-1 py-2 px-3 rounded-full bg-white/5 hover:bg-white/10 text-ink text-xs font-medium border border-white/10 flex items-center justify-center gap-1.5 transition-colors font-mono"
                 >
                   <FileCode className="w-3.5 h-3.5 text-sage" />
                   <span>Export GLB</span>

@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, Sparkles, ArrowRight, Shield, Zap } from "lucide-react";
-import { motion } from "framer-motion";
+import { Check, ArrowRight, Zap } from "lucide-react";
 
 export default function PricingSection() {
   const [isAnnual, setIsAnnual] = useState(true);
@@ -65,15 +64,22 @@ export default function PricingSection() {
     <section id="pricing" className="relative py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-14">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-white/10 text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-white/10 mb-4">
           <Zap className="w-3.5 h-3.5 text-sage" />
-          <span>Simple, Transparent Pricing</span>
+          <span className="eyebrow-label text-ink-soft">Simple, Transparent Pricing</span>
         </div>
-        <h2 className="text-3xl sm:text-5xl font-black text-ink tracking-tight mb-4">
+        <h2 className="text-3xl sm:text-5xl font-black text-ink tracking-[-0.03em] leading-tight mb-4">
           Invest in your tables.{" "}
-          <span className="text-sage text-halftone-accent">Recoup on day one.</span>
+          <span className="font-serif-luxury font-normal text-white">
+            Recoup
+          </span>{" "}
+          <span className="highlight-pill-sage">
+            <span className="text-sage-luminous">
+              on day one.
+            </span>
+          </span>
         </h2>
-        <p className="text-ink-soft text-sm sm:text-base font-light max-w-xl mx-auto mb-8">
+        <p className="text-ink-soft text-sm sm:text-base font-light max-w-xl mx-auto mb-8 leading-relaxed">
           One 25% larger table bill pays for your entire monthly subscription.
         </p>
 
@@ -81,7 +87,7 @@ export default function PricingSection() {
         <div className="inline-flex items-center p-1.5 rounded-full bg-surface-elevated border border-white/10 shadow-glass">
           <button
             onClick={() => setIsAnnual(false)}
-            className={`px-5 py-2 rounded-full text-xs font-semibold transition-all ${
+            className={`px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all ${
               !isAnnual
                 ? "bg-sage text-charcoal shadow-sm"
                 : "text-ink-soft hover:text-white"
@@ -91,14 +97,14 @@ export default function PricingSection() {
           </button>
           <button
             onClick={() => setIsAnnual(true)}
-            className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-xs font-semibold tracking-wide transition-all ${
               isAnnual
                 ? "bg-sage text-charcoal shadow-sm"
                 : "text-ink-soft hover:text-white"
             }`}
           >
             <span>Annual Billing</span>
-            <span className="px-2 py-0.5 rounded-full bg-charcoal text-sage text-[10px] font-bold">
+            <span className="px-2 py-0.5 rounded-full bg-charcoal text-sage text-[10px] font-bold font-mono">
               SAVE 20%
             </span>
           </button>
@@ -107,7 +113,7 @@ export default function PricingSection() {
 
       {/* Pricing Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-        {tiers.map((tier, idx) => (
+        {tiers.map((tier) => (
           <div
             key={tier.name}
             className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
@@ -117,28 +123,28 @@ export default function PricingSection() {
             }`}
           >
             {tier.highlighted && (
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-sage text-charcoal text-[11px] font-black uppercase tracking-wider shadow-sage-glow">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-sage text-charcoal text-[11px] font-black uppercase tracking-wider shadow-sage-glow font-mono">
                 RECOMMENDED BY CHEFS
               </div>
             )}
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xl font-bold text-ink">{tier.name}</h3>
+                <h3 className="text-xl font-bold text-ink tracking-tight">{tier.name}</h3>
                 <span className="text-[10px] font-mono text-sage bg-sage/15 px-2.5 py-1 rounded-full">
                   {tier.badge}
                 </span>
               </div>
-              <p className="text-xs text-ink-soft font-light mb-6 min-h-[36px]">
+              <p className="text-xs text-ink-soft font-light mb-6 min-h-[36px] leading-relaxed">
                 {tier.description}
               </p>
 
               {/* Price Tag */}
-              <div className="flex items-baseline gap-1 mb-8 pb-6 border-b border-white/10">
-                <span className="text-4xl sm:text-5xl font-black text-ink">
+              <div className="flex items-baseline gap-1 mb-8 pb-6 border-t border-b border-white/10 pt-4">
+                <span className="text-4xl sm:text-5xl font-black text-ink font-mono tabular-nums tracking-tight">
                   {isAnnual ? tier.priceAnnual : tier.priceMonthly}
                 </span>
-                <span className="text-xs text-ink-muted">
+                <span className="text-xs text-ink-muted font-mono">
                   {tier.priceMonthly !== "$0" ? "/ month" : ""}
                 </span>
               </div>
@@ -146,7 +152,7 @@ export default function PricingSection() {
               {/* Features List */}
               <ul className="flex flex-col gap-3 mb-8">
                 {tier.features.map((feature, fIdx) => (
-                  <li key={fIdx} className="flex items-center gap-3 text-xs text-ink-soft">
+                  <li key={fIdx} className="flex items-center gap-3 text-xs text-ink-soft font-light">
                     <div className="w-4 h-4 rounded-full bg-sage/20 flex items-center justify-center shrink-0">
                       <Check className="w-2.5 h-2.5 text-sage" />
                     </div>
@@ -159,7 +165,7 @@ export default function PricingSection() {
             {/* CTA Button */}
             <a
               href="#studio"
-              className={`w-full py-3.5 rounded-full font-semibold text-xs text-center flex items-center justify-center gap-2 transition-all ${
+              className={`w-full py-3.5 rounded-full font-semibold text-xs text-center flex items-center justify-center gap-2 transition-all tracking-wide ${
                 tier.highlighted
                   ? "bg-sage-solid hover:bg-sage text-charcoal shadow-sage-glow hover:scale-105 active:scale-95"
                   : "bg-white/5 hover:bg-white/10 text-ink border border-white/10 hover:border-white/20"

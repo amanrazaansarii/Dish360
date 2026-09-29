@@ -2,16 +2,11 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import {
   ChevronDown,
   HelpCircle,
   Sparkles,
   ArrowUpRight,
-  ShieldCheck,
-  Smartphone,
-  Wifi,
-  DollarSign,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -46,13 +41,20 @@ export default function FaqFooter() {
       {/* FAQ Accordion Section */}
       <div className="max-w-3xl mx-auto mb-24">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-white/10 text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-white/10 mb-4">
             <HelpCircle className="w-3.5 h-3.5 text-sage" />
-            <span>Frequently Answered Inquiries</span>
+            <span className="eyebrow-label text-ink-soft">Frequently Answered Inquiries</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-ink tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-black text-ink tracking-[-0.03em] leading-tight">
             Everything you need to know about{" "}
-            <span className="text-sage text-halftone-accent">WebAR Dining</span>
+            <span className="font-serif-luxury font-normal text-white">
+              living
+            </span>{" "}
+            <span className="highlight-pill-sage">
+              <span className="text-sage-luminous">
+                WebAR Dining
+              </span>
+            </span>
           </h2>
         </div>
 
@@ -68,7 +70,7 @@ export default function FaqFooter() {
                   onClick={() => setOpenIdx(isOpen ? null : idx)}
                   className="w-full p-5 text-left flex items-center justify-between gap-4 focus:outline-none"
                 >
-                  <span className="text-sm sm:text-base font-bold text-ink">
+                  <span className="text-sm sm:text-base font-bold text-ink tracking-tight">
                     {faq.q}
                   </span>
                   <div
@@ -111,19 +113,27 @@ export default function FaqFooter() {
             <span>JOIN 200+ FORWARD-THINKING RESTAURANTS</span>
           </div>
 
-          <h3 className="text-3xl sm:text-5xl font-black text-ink tracking-tight mb-4 leading-tight">
+          <h3 className="text-3xl sm:text-5xl font-black text-ink tracking-[-0.03em] mb-4 leading-tight">
             Ready to upgrade your menus to{" "}
-            <span className="text-sage text-halftone-accent">living WebAR</span>?
+            <span className="font-serif-luxury font-normal text-white">
+              living
+            </span>{" "}
+            <span className="highlight-pill-sage">
+              <span className="text-sage-luminous">
+                WebAR
+              </span>
+            </span>
+            ?
           </h3>
 
-          <p className="text-ink-soft text-sm sm:text-base font-light mb-8 max-w-lg mx-auto">
+          <p className="text-ink-soft text-sm sm:text-base font-light mb-8 max-w-lg mx-auto leading-relaxed">
             Set up your first 3D dish in under 5 minutes. No credit card required.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a
               href="#studio"
-              className="px-8 py-4 rounded-full bg-sage-solid hover:bg-sage text-charcoal font-bold text-sm shadow-sage-glow transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-2"
+              className="px-8 py-4 rounded-full bg-sage-solid hover:bg-sage text-charcoal font-bold text-xs tracking-wide shadow-sage-glow transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-2"
             >
               <span>Launch 3D Menu Builder</span>
               <ArrowUpRight className="w-4 h-4" />
@@ -131,7 +141,7 @@ export default function FaqFooter() {
 
             <a
               href="#pricing"
-              className="px-8 py-4 rounded-full bg-white/5 hover:bg-white/10 text-ink font-semibold text-sm border border-white/10 transition-colors"
+              className="px-8 py-4 rounded-full bg-white/5 hover:bg-white/10 text-ink font-semibold text-xs tracking-wide border border-white/10 transition-colors"
             >
               View Pricing Plans
             </a>
@@ -140,7 +150,7 @@ export default function FaqFooter() {
       </div>
 
       {/* Bottom Footer Bar */}
-      <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-ink-muted">
+      <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-ink-muted font-sans">
         {/* Brand info */}
         <div className="flex items-center gap-3">
           <Image
@@ -151,8 +161,8 @@ export default function FaqFooter() {
             className="object-contain"
           />
           <div className="flex flex-col text-left">
-            <span className="font-bold text-ink text-sm">Dish360</span>
-            <span className="text-[10px]">© 2026 Dish360 Technologies Inc. All rights reserved.</span>
+            <span className="font-bold text-ink text-sm tracking-tight">Dish360</span>
+            <span className="text-[10px] text-ink-muted">© 2026 Dish360 Technologies Inc. All rights reserved.</span>
           </div>
         </div>
 
@@ -170,7 +180,7 @@ export default function FaqFooter() {
           <a href="#pricing" className="hover:text-white transition-colors">
             Pricing
           </a>
-          <span className="flex items-center gap-1.5 text-sage font-mono text-[10px]">
+          <span className="flex items-center gap-1.5 text-sage font-mono text-[10px] tabular-nums">
             <span className="w-1.5 h-1.5 rounded-full bg-sage animate-ping" />
             <span>SYSTEMS NOMINAL</span>
           </span>

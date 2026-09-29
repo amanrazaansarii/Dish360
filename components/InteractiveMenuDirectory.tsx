@@ -5,11 +5,8 @@ import {
   Smartphone,
   Star,
   Flame,
-  QrCode,
-  Filter,
   Eye,
   X,
-  Sparkles,
   ArrowUpRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -125,14 +122,22 @@ export default function InteractiveMenuDirectory() {
     <section id="menu-directory" className="relative py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-12">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-white/10 text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-white/10 mb-4">
           <Smartphone className="w-3.5 h-3.5 text-sage" />
-          <span>Frictionless Diner Discovery</span>
+          <span className="eyebrow-label text-ink-soft">Frictionless Diner Discovery</span>
         </div>
-        <h2 className="text-3xl sm:text-5xl font-black text-ink tracking-tight mb-4">
-          Browse dishes in <span className="text-sage text-halftone-accent">true 3D scale</span>
+        <h2 className="text-3xl sm:text-5xl font-black text-ink tracking-[-0.03em] leading-tight mb-4">
+          Browse dishes in{" "}
+          <span className="font-serif-luxury font-normal text-white">
+            true-to-scale
+          </span>{" "}
+          <span className="highlight-pill-sage">
+            <span className="text-sage-luminous">
+              3D WebAR
+            </span>
+          </span>
         </h2>
-        <p className="text-ink-soft text-sm sm:text-base font-light max-w-xl mx-auto">
+        <p className="text-ink-soft text-sm sm:text-base font-light max-w-xl mx-auto leading-relaxed">
           Diners can explore your full menu before visiting, eliminating ordering hesitation and
           sparking appetite.
         </p>
@@ -144,9 +149,9 @@ export default function InteractiveMenuDirectory() {
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id as any)}
-            className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all tracking-wide ${
               selectedCategory === cat.id
-                ? "bg-sage text-charcoal shadow-sage-glow"
+                ? "bg-sage text-charcoal shadow-sage-glow font-bold"
                 : "bg-surface text-ink-soft hover:text-white hover:bg-white/10 border border-white/5"
             }`}
           >
@@ -173,7 +178,7 @@ export default function InteractiveMenuDirectory() {
                 <span className="text-[10px] font-mono uppercase tracking-widest text-sage bg-sage/15 px-2.5 py-1 rounded-full border border-sage/20">
                   {dish.categoryLabel}
                 </span>
-                <span className="text-base font-black text-sage">{dish.price}</span>
+                <span className="text-base font-black text-sage font-mono tabular-nums">{dish.price}</span>
               </div>
 
               {/* 3D Visual Disc Preview */}
@@ -194,7 +199,7 @@ export default function InteractiveMenuDirectory() {
               </div>
 
               {/* Dish Title & Description */}
-              <h3 className="text-lg font-bold text-ink mb-1.5 group-hover:text-white transition-colors">
+              <h3 className="text-lg font-bold text-ink mb-1.5 tracking-tight group-hover:text-white transition-colors">
                 {dish.name}
               </h3>
               <p className="text-xs text-ink-soft font-light line-clamp-2 mb-4 leading-relaxed">
@@ -206,7 +211,7 @@ export default function InteractiveMenuDirectory() {
                 {dish.tags.map((tag, i) => (
                   <span
                     key={i}
-                    className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-ink-muted border border-white/5"
+                    className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-ink-muted border border-white/5 font-mono"
                   >
                     {tag}
                   </span>
@@ -215,7 +220,7 @@ export default function InteractiveMenuDirectory() {
             </div>
 
             {/* Card Footer: Calorie + Launch AR Button */}
-            <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs">
+            <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs font-mono tabular-nums">
               <div className="flex items-center gap-3 text-ink-muted">
                 <span className="flex items-center gap-1">
                   <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
@@ -229,7 +234,7 @@ export default function InteractiveMenuDirectory() {
 
               <button
                 onClick={() => setActiveModalDish(dish)}
-                className="flex items-center gap-1 text-xs font-semibold text-sage hover:text-white transition-colors"
+                className="flex items-center gap-1 text-xs font-semibold text-sage hover:text-white transition-colors font-sans"
               >
                 <span>Launch AR</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -266,8 +271,8 @@ export default function InteractiveMenuDirectory() {
               <div className="text-xs font-mono uppercase tracking-widest text-sage mb-2">
                 {activeModalDish.categoryLabel}
               </div>
-              <h3 className="text-2xl font-black text-ink mb-1">{activeModalDish.name}</h3>
-              <div className="text-base font-bold text-sage mb-6">{activeModalDish.price}</div>
+              <h3 className="text-2xl font-black text-ink mb-1 tracking-tight">{activeModalDish.name}</h3>
+              <div className="text-base font-bold text-sage mb-6 font-mono tabular-nums">{activeModalDish.price}</div>
 
               {/* Scannable AR QR Code */}
               <div className="p-6 rounded-2xl bg-white mx-auto w-56 h-56 flex flex-col items-center justify-center shadow-lg mb-6">
@@ -276,18 +281,18 @@ export default function InteractiveMenuDirectory() {
                   alt="WebAR QR"
                   className="w-36 h-36 object-contain"
                 />
-                <span className="text-[10px] font-bold text-charcoal uppercase tracking-widest mt-2">
+                <span className="text-[10px] font-bold text-charcoal uppercase tracking-widest mt-2 font-mono">
                   SCAN WITH PHONE CAMERA
                 </span>
               </div>
 
-              <p className="text-xs text-ink-soft max-w-sm mx-auto mb-6">
+              <p className="text-xs text-ink-soft max-w-sm mx-auto mb-6 leading-relaxed font-light">
                 Opens directly in iOS Quick Look USDZ or Android WebXR with zero app installations.
               </p>
 
               <button
                 onClick={() => setActiveModalDish(null)}
-                className="w-full py-3 rounded-full bg-sage text-charcoal font-bold text-xs shadow-sage-glow"
+                className="w-full py-3 rounded-full bg-sage text-charcoal font-bold text-xs shadow-sage-glow tracking-wide"
               >
                 Close AR Inspector
               </button>

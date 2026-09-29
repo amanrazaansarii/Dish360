@@ -4,16 +4,10 @@ import React, { useState } from "react";
 import {
   TrendingUp,
   DollarSign,
-  Users,
   Clock,
-  Sparkles,
   QrCode,
-  Flame,
-  ArrowUpRight,
   ShieldCheck,
-  CheckCircle2,
 } from "lucide-react";
-import { motion } from "framer-motion";
 
 export default function AnalyticsRoiHub() {
   const [tables, setTables] = useState(25);
@@ -33,15 +27,23 @@ export default function AnalyticsRoiHub() {
     <section id="roi-ledger" className="relative py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-16">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-white/10 text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft mb-4">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface border border-white/10 mb-4">
           <TrendingUp className="w-3.5 h-3.5 text-sage" />
-          <span>Real-Time Proof & Economic ROI</span>
+          <span className="eyebrow-label text-ink-soft">Real-Time Proof & Economic ROI</span>
         </div>
-        <h2 className="text-3xl sm:text-5xl font-black text-ink tracking-tight mb-4">
+        <h2 className="text-3xl sm:text-5xl font-black text-ink tracking-[-0.03em] leading-tight mb-4">
           Turn your dining tables into{" "}
-          <span className="text-sage text-halftone-accent">high-revenue stages</span>.
+          <span className="font-serif-luxury font-normal text-white">
+            high-revenue
+          </span>{" "}
+          <span className="highlight-pill-sage">
+            <span className="text-sage-luminous">
+              3D stages
+            </span>
+          </span>
+          .
         </h2>
-        <p className="text-ink-soft text-sm sm:text-base font-light max-w-xl mx-auto">
+        <p className="text-ink-soft text-sm sm:text-base font-light max-w-xl mx-auto leading-relaxed">
           Diners order more when they can see true-to-scale food on their table. Calculate your
           exact return on investment below.
         </p>
@@ -57,7 +59,7 @@ export default function AnalyticsRoiHub() {
                 Live Restaurant Telemetry
               </span>
             </div>
-            <span className="text-[11px] font-mono text-sage bg-sage/15 px-2.5 py-1 rounded-full">
+            <span className="text-[11px] font-mono text-sage bg-sage/15 px-2.5 py-1 rounded-full tabular-nums">
               UPDATED LIVE // 24H
             </span>
           </div>
@@ -69,8 +71,8 @@ export default function AnalyticsRoiHub() {
                 <span className="text-[11px] uppercase tracking-wider font-mono">Today's Scans</span>
                 <QrCode className="w-4 h-4 text-sage" />
               </div>
-              <div className="text-2xl font-black text-ink">1,482</div>
-              <div className="text-[10px] text-emerald-400 font-mono mt-1">↑ +18.4% vs last week</div>
+              <div className="text-2xl font-black text-ink font-mono tabular-nums">1,482</div>
+              <div className="text-[10px] text-emerald-400 font-mono tabular-nums mt-1">↑ +18.4% vs last week</div>
             </div>
 
             <div className="p-4 rounded-2xl bg-black/40 border border-white/5">
@@ -78,7 +80,7 @@ export default function AnalyticsRoiHub() {
                 <span className="text-[11px] uppercase tracking-wider font-mono">AR Dwell Time</span>
                 <Clock className="w-4 h-4 text-sage" />
               </div>
-              <div className="text-2xl font-black text-ink">3m 48s</div>
+              <div className="text-2xl font-black text-ink font-mono tabular-nums">3m 48s</div>
               <div className="text-[10px] text-sage font-mono mt-1">High engagement rate</div>
             </div>
 
@@ -87,7 +89,7 @@ export default function AnalyticsRoiHub() {
                 <span className="text-[11px] uppercase tracking-wider font-mono">AOV Lift</span>
                 <DollarSign className="w-4 h-4 text-emerald-400" />
               </div>
-              <div className="text-2xl font-black text-emerald-400">+24.8%</div>
+              <div className="text-2xl font-black text-emerald-400 font-mono tabular-nums">+24.8%</div>
               <div className="text-[10px] text-ink-muted font-mono mt-1">Appetite stimulation</div>
             </div>
 
@@ -96,7 +98,7 @@ export default function AnalyticsRoiHub() {
                 <span className="text-[11px] uppercase tracking-wider font-mono">Return Rate</span>
                 <ShieldCheck className="w-4 h-4 text-sage" />
               </div>
-              <div className="text-2xl font-black text-ink">&lt; 0.2%</div>
+              <div className="text-2xl font-black text-ink font-mono tabular-nums">&lt; 0.2%</div>
               <div className="text-[10px] text-ink-muted font-mono mt-1">Zero portion surprises</div>
             </div>
           </div>
@@ -120,7 +122,7 @@ export default function AnalyticsRoiHub() {
                     <span className="text-sage font-mono">#{i + 1}</span>
                     <span>{dish.name}</span>
                   </span>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 font-mono tabular-nums">
                     <span className="text-ink-muted">{dish.scans}</span>
                     <span className="text-emerald-400 font-semibold">{dish.conv}</span>
                   </div>
@@ -146,7 +148,7 @@ export default function AnalyticsRoiHub() {
             <div className="mb-5">
               <div className="flex items-center justify-between text-xs mb-2">
                 <span className="text-ink-soft">Dining Tables in Restaurant</span>
-                <span className="font-bold text-ink font-mono text-sm">{tables} tables</span>
+                <span className="font-bold text-ink font-mono tabular-nums text-sm">{tables} tables</span>
               </div>
               <input
                 type="range"
@@ -163,7 +165,7 @@ export default function AnalyticsRoiHub() {
             <div className="mb-5">
               <div className="flex items-center justify-between text-xs mb-2">
                 <span className="text-ink-soft">Average Turns / Covers per Table / Day</span>
-                <span className="font-bold text-ink font-mono text-sm">{coversPerDay} turns</span>
+                <span className="font-bold text-ink font-mono tabular-nums text-sm">{coversPerDay} turns</span>
               </div>
               <input
                 type="range"
@@ -180,7 +182,7 @@ export default function AnalyticsRoiHub() {
             <div className="mb-6">
               <div className="flex items-center justify-between text-xs mb-2">
                 <span className="text-ink-soft">Average Guest Check Size ($)</span>
-                <span className="font-bold text-ink font-mono text-sm">${averageCheck} / guest</span>
+                <span className="font-bold text-ink font-mono tabular-nums text-sm">${averageCheck} / guest</span>
               </div>
               <input
                 type="range"
@@ -199,21 +201,21 @@ export default function AnalyticsRoiHub() {
             <div className="text-[11px] uppercase tracking-widest text-sage font-mono mb-2">
               PROJECTED ANNUAL REVENUE EXPANSION
             </div>
-            <div className="text-3xl sm:text-4xl font-black text-ink mb-3">
+            <div className="text-3xl sm:text-4xl font-black text-ink mb-3 font-mono tabular-nums tracking-tight">
               +${Math.round(totalAnnualBenefit).toLocaleString()}
-              <span className="text-xs font-normal text-ink-muted ml-2">/ year</span>
+              <span className="text-xs font-normal text-ink-muted ml-2 font-sans">/ year</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/10 text-xs">
               <div>
-                <span className="text-ink-muted block text-[10px]">Upsell Revenue:</span>
-                <span className="font-bold text-emerald-400">
+                <span className="text-ink-muted block text-[10px] font-sans">Upsell Revenue:</span>
+                <span className="font-bold text-emerald-400 font-mono tabular-nums">
                   +${Math.round(estimatedAnnualBoost).toLocaleString()}
                 </span>
               </div>
               <div>
-                <span className="text-ink-muted block text-[10px]">Paper Printing Saved:</span>
-                <span className="font-bold text-sage">
+                <span className="text-ink-muted block text-[10px] font-sans">Paper Printing Saved:</span>
+                <span className="font-bold text-sage font-mono tabular-nums">
                   +${Math.round(printSavingsAnnual).toLocaleString()}
                 </span>
               </div>
