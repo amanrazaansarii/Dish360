@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Dish360 · landing variations</title>
+<link rel="icon" href="builds/c-refined/assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #131313; --ink: #e5e2e1; --soft: #9a9796; --muted: #85827f; --sage: #aad0af; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.6 "Plus Jakarta Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  main { max-width: 1180px; margin: 0 auto; padding: clamp(40px, 8vh, 96px) clamp(16px, 4vw, 48px) 80px; }
+  h1 { margin: 0; font-size: clamp(2.2rem, 1.4rem + 3vw, 3.6rem); font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+  .lede { margin: 16px 0 0; max-width: 62ch; color: var(--soft); }
+  ol { list-style: none; margin: 56px 0 0; padding: 0; display: grid; gap: 16px; }
+  li a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: start; padding: 26px 28px; border-radius: 20px; text-decoration: none; color: inherit;
+    background: rgba(30, 34, 38, 0.55); box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05); transition: background 160ms; }
+  li a:hover { background: rgba(36, 41, 46, 0.7); }
+  li a:focus-visible { outline: 2px solid var(--sage); outline-offset: 3px; }
+  h2 { margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+  .kind { margin: 4px 0 0; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .kind b { color: var(--sage); }
+  p.d { margin: 12px 0 0; color: var(--soft); max-width: 68ch; }
+  .go { align-self: center; font-weight: 600; font-size: 0.9rem; white-space: nowrap; }
+  footer { margin-top: 48px; font-size: 0.82rem; color: var(--muted); }
+  @media (max-width: 640px) { li a { grid-template-columns: 1fr; gap: 10px; } .go { justify-self: start; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Landing variations</h1>
+  <p class="lede">The live home page, and a candidate copy to compare it with. Nothing here is linked from the live site.</p>
+  <ol>
+    <li><a href="/">
+      <div>
+        <h2>How It Works</h2>
+        <p class="kind"><b>Live now</b> · dish360.in</p>
+        <p class="d">The guided walkthrough as chosen: five steps, each labelled with who does it, beside one changing picture, an order-tracker bar, a before-and-after, what you need, questions and "Book a demo".</p>
+      </div>
+      <span class="go">Open →</span>
+    </a></li>
+    <li><a href="builds/c-refined/index.html">
+      <div>
+        <h2>How It Works, refined</h2>
+        <p class="kind">Candidate copy · not live</p>
+        <p class="d">A shorter version that funnels to the plans: three steps, three before-and-after rows, the Starter, Restaurant Pro and Enterprise plans with Pro emphasised, and a get-started form. The header tracker ends at a Plans flag.</p>
+      </div>
+      <span class="go">Open →</span>
+    </a></li>
+  </ol>
+  <footer>The refined copy's get-started form stores nothing until LEAD_ENDPOINT is set in builds/c-refined/index.html (see README.md).</footer>
+</main>
+</body>
+</html>

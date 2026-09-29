@@ -1,8 +1,12 @@
-# Home page (dish360.in)
+# Landing variations
 
-The home page is a static page in this folder, served at `/` by a rewrite in
-`next.config.mjs`. It does not use React or the app's components, so it loads
-fast and is independent of the rest of the Next.js app.
+`/variants` (redirects to `/variants/index.html`) lists the live home page and
+a candidate copy. The live home page itself is `public/home`, served at `/` by a
+rewrite in `next.config.mjs`.
+
+## `builds/c-refined`: the refined candidate (not live)
+
+A static page (plain HTML, CSS and JS). It is marked `noindex`.
 
 ## Files
 
