@@ -181,13 +181,14 @@ export default async function InsightsPage({
                       "Dish",
                       "Opened",
                       "In 3D",
-                      "Of those",
+                      "3D rate",
                       "Ordered",
-                      "Of those",
+                      "Order rate",
                       "Time on it",
                     ].map((heading, index) => (
                       <th
-                        key={heading}
+                        // Keyed by position: two columns could share a label.
+                        key={index}
                         className={cn(
                           "pb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-dim",
                           index > 0 && "text-right",
