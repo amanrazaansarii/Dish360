@@ -204,4 +204,20 @@ body {
   textarea {
     cursor: none !important;
   }
+
+  /* Text fields keep their caret: in a form the I-beam tells you where you are
+     about to type, and the blend cursor cannot. Same decision as
+     public/home/brand.css. */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="url"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="time"],
+  input:not([type]),
+  textarea {
+    cursor: text !important;
+  }
 }

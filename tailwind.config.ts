@@ -19,6 +19,13 @@ const config: Config = {
           DEFAULT: "#E5E2E1",
           soft: "rgba(229, 226, 225, 0.65)",
           muted: "rgba(229, 226, 225, 0.4)",
+          // Resolved, opaque versions of soft/muted, taken from
+          // public/home/brand.css where they were chosen to clear contrast on
+          // the #131313 canvas (5.9:1 and 4.5:1). Added, not substituted, so
+          // nothing already using ink-soft / ink-muted changes. New app screens
+          // use these so they read the same as the home page.
+          plain: "#9A9796",
+          dim: "#85827F",
         },
         sage: {
           DEFAULT: "#AAD0AF",
