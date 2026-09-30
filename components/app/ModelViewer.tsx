@@ -126,6 +126,9 @@ export default function ModelViewer({
     };
   }, [state, onModelLoad, onReady, onArStatusChange]);
 
+  // Camera framing is left on "auto" below: model-viewer sizes the shot to the
+  // model. A fixed radius looked right for one plate and left every other dish
+  // small and stranded in the middle of the frame.
   const preset = ENVIRONMENTS[environment];
 
   return (
@@ -149,10 +152,11 @@ export default function ModelViewer({
             {...(autoRotate ? { "auto-rotate": true as const } : {})}
             auto-rotate-delay={1200}
             rotation-per-second="18deg"
-            camera-orbit="35deg 72deg 0.62m"
+            camera-orbit="30deg 70deg auto"
             min-camera-orbit="auto 0deg auto"
-            max-camera-orbit="auto 92deg 1.6m"
-            camera-target="0m 0.03m 0m"
+            max-camera-orbit="auto 92deg auto"
+            camera-target="auto auto auto"
+            field-of-view="28deg"
             exposure={exposure ?? preset.exposure}
             tone-mapping={preset.toneMapping}
             shadow-intensity={shadowIntensity}
