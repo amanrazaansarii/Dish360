@@ -221,3 +221,22 @@ body {
     cursor: text !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Printing the table stands. The dashboard chrome is hidden and each stand is
+   a page of its own, so the PDF is only the artwork.
+   -------------------------------------------------------------------------- */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .print-sheet {
+    break-after: page;
+    box-shadow: none !important;
+  }
+}
