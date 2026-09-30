@@ -16,13 +16,17 @@ export function Panel({
   children,
   className,
   as: Tag = "div",
+  id,
 }: {
   children: ReactNode;
   className?: string;
   as?: "div" | "section" | "article" | "li";
+  /** for deep links, e.g. /dashboard/menu/<id>#three-d */
+  id?: string;
 }) {
   return (
     <Tag
+      id={id}
       className={cn(
         "rounded-2xl bg-surface/80 shadow-glass ring-1 ring-inset ring-white/[0.06] backdrop-blur-xl",
         className,

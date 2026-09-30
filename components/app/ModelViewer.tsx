@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { LoaderCircle, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { ModelEnvironment } from "@/lib/types";
 import type { ModelViewerElement } from "@/types/model-viewer";
 
 /**
@@ -17,7 +18,7 @@ export interface ModelViewerProps {
   iosSrc?: string | null;
   alt: string;
   poster?: string;
-  environment?: "studio" | "warm" | "neutral" | "dramatic";
+  environment?: ModelEnvironment;
   exposure?: number;
   shadowIntensity?: number;
   shadowSoftness?: number;
@@ -44,7 +45,7 @@ const ENVIRONMENTS: Record<
   studio: { exposure: 1.15, toneMapping: "neutral" },
   warm: { exposure: 1, toneMapping: "aces" },
   neutral: { exposure: 0.9, toneMapping: "neutral" },
-  dramatic: { exposure: 0.62, toneMapping: "aces" },
+  soft: { exposure: 0.62, toneMapping: "aces" },
 };
 
 let registration: Promise<void> | null = null;

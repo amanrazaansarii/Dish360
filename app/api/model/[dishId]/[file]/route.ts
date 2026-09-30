@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { getDish } from "@/lib/db";
+import { getAuth } from "@/lib/auth/session";
 import { renderModel } from "@/lib/ar/pipeline";
 import { GEOMETRY_VERSION } from "@/lib/ar/geometry";
 import { isLiveInAr } from "@/lib/dish";
@@ -55,12 +56,24 @@ export async function GET(
     return Response.json({ error: "No such dish." }, { status: 404 });
   }
 
-  // The owner has to approve a model before a guest can load it.
+  // Guests only see a model the owner has released. The owner themselves has
+  // to be able to see it before that, or there is nothing to decide about.
   if (!isLiveInAr(dish)) {
-    return Response.json(
-      { error: "This dish is not available in 3D yet." },
-      { status: 409 },
-    );
+    const auth = await getAuth();
+    const isOwner = auth?.restaurant.id === dish.restaurantId;
+
+    if (!isOwner) {
+      return Response.json(
+        { error: "This dish is not available in 3D yet." },
+        { status: 409 },
+      );
+    }
+    if (dish.model.status !== "ready" || !dish.model.glbUrl) {
+      return Response.json(
+        { error: "This dish has no 3D model yet." },
+        { status: 409 },
+      );
+    }
   }
 
   const format = params.file === "model.glb" ? "glb" : "usdz";
@@ -68,7 +81,10 @@ export async function GET(
 
   // Short cache so a guest on mobile data does not re-download it within one
   // sitting, but a change the kitchen makes still reaches the next table.
-  const cacheControl = "public, max-age=300, must-revalidate";
+  // An unreleased model is the owner's private preview, so it is never shared.
+  const cacheControl = isLiveInAr(dish)
+    ? "public, max-age=300, must-revalidate"
+    : "private, no-store";
 
   if (request.headers.get("if-none-match") === etag) {
     return new Response(null, {
