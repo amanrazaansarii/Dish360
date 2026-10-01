@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { requireAuth } from "@/lib/auth/session";
-import { listDishes, listOutbox, listTableCodes } from "@/lib/db";
+import { backend, listDishes, listOutbox, listTableCodes } from "@/lib/db";
 import { providerStatus } from "@/lib/ar/pipeline";
+import { photoStore } from "@/lib/storage/photos";
 import { Eyebrow, PageTitle } from "@/components/app/ui";
 import SettingsForms from "./SettingsForms";
 
@@ -30,6 +31,7 @@ export default async function SettingsPage() {
         user={{ name: user.name, email: user.email, role: user.role }}
         counts={{ dishes: dishes.length, codes: codes.length }}
         provider={providerStatus()}
+        storage={{ data: backend, photos: photoStore() }}
         outbox={outbox.slice(0, 10)}
       />
     </div>

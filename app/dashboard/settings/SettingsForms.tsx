@@ -37,12 +37,14 @@ export default function SettingsForms({
   user,
   counts,
   provider,
+  storage,
   outbox,
 }: {
   restaurant: Restaurant;
   user: { name: string; email: string; role: string };
   counts: { dishes: number; codes: number };
   provider: { label: string; connected: boolean; note: string };
+  storage: { data: "local" | "supabase"; photos: "disk" | "supabase" };
   outbox: OutboxMessage[];
 }) {
   const [placeState, placeAction] = useFormState(updatePlaceAction, EMPTY);
@@ -427,6 +429,26 @@ export default function SettingsForms({
 
         <div className="mt-5 flex flex-col gap-4">
           <Wired
+            title="Where your menu is kept"
+            status={storage.data === "supabase" ? "Supabase" : "This machine"}
+            connected={storage.data === "supabase"}
+            detail={
+              storage.data === "supabase"
+                ? "Your menu, codes and numbers live in your Supabase database. Photographs go to Supabase Storage."
+                : "Everything is in a file on this computer. That is fine while you are trying it out, but a deployed site usually has no disk to write to — connect Supabase before putting this online."
+            }
+            action={
+              <a
+                href="/api/db-check"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[12px] font-semibold text-sage hover:underline"
+              >
+                Check the connection
+              </a>
+            }
+          />
+          <Wired
             title="Building the 3D"
             status={provider.label}
             connected={provider.connected}
@@ -529,11 +551,13 @@ function Wired({
   status,
   connected,
   detail,
+  action,
 }: {
   title: string;
   status: string;
   connected: boolean;
   detail: string;
+  action?: React.ReactNode;
 }) {
   return (
     <Well className="px-4 py-3.5">
@@ -542,6 +566,7 @@ function Wired({
         <Tag tone={connected ? "sage" : "neutral"}>{status}</Tag>
       </div>
       <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-plain">{detail}</p>
+      {action ? <div className="mt-2">{action}</div> : null}
     </Well>
   );
 }

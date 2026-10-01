@@ -58,7 +58,8 @@ Other routes: `/signin` `/signup` `/forgot-password` `/menus` `/scan`
 lib/
   types.ts        the domain
   dish.ts         when a dish is visible, and when its 3D is
-  db/             a local JSON store behind a repository layer
+  db/             two backends, one repository layer: a JSON file or Supabase
+  storage/        where a dish photograph goes, by the same split
   auth/           scrypt hashing, signed session cookies
   ar/             geometry → GLB and USDZ, and the build pipeline
   qr/             codes as PNG and vector, for print
@@ -93,13 +94,49 @@ load their own unreleased model; nobody else can.
 
 ## Storage
 
-`lib/db/store.ts` is the only file that touches the disk. Everything else talks
-to the repository in `lib/db/index.ts`, which returns plain objects. Moving to
-Supabase means rewriting the bodies in that one file — no screen imports the
-store.
+There are two complete backends behind one set of function signatures, and
+nothing above `lib/db/index.ts` knows which is live:
 
-`.env.local` already holds Supabase keys, but `@supabase/supabase-js` is not
-installed and nothing reads them yet.
+| | |
+|---|---|
+| `lib/db/local/` | a JSON file under `.data/`, seeded on first use |
+| `lib/db/remote/` | Supabase |
+| `lib/storage/photos.ts` | the same split for photographs: `public/uploads/` or a Supabase Storage bucket |
+
+Which one runs is decided by the environment, not by a flag in code:
+
+```
+DATA_BACKEND=local | supabase    decides outright, if set
+otherwise                        Supabase when its keys are present, else local
+```
+
+**The local store refuses to serve production traffic.** It writes to a disk,
+and a serverless host either has none or throws it away between requests — the
+app would look fine and then lose everything. So a production request with no
+Supabase keys fails loudly instead, naming what is missing. `next build` is
+exempt: a build is not a deployment, and the project still builds with no keys
+at all. `DATA_BACKEND=local` is the opt-in for a VPS or a container that really
+does have a persistent disk.
+
+### Going live on Supabase
+
+1. Run `supabase/migrations/0001_dish360.sql` against the project — SQL Editor,
+   or `supabase db push`. It creates the eleven tables, the `bump_scan`
+   function, and the `dish-photos` storage bucket.
+2. Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
+3. Open `/api/db-check` signed in as an owner. It checks every table, the
+   function and the bucket, and names anything missing. `/api/db-check?write=1`
+   also puts one throwaway row in and takes it out again, which is the only way
+   to know writes work.
+
+Settings shows which backend is live, so this is visible without reading logs.
+
+**On the keys.** `SUPABASE_SERVICE_ROLE_KEY` has no `NEXT_PUBLIC_` prefix on
+purpose — Next inlines any `NEXT_PUBLIC_` variable into the browser bundle, and
+this key bypasses every row-level policy. Row-level security is enabled on all
+eleven tables with no policies attached, so the service role reaches the data
+and the anon key reaches nothing. Keep it out of the repository: see
+`.env.example`.
 
 ---
 
@@ -115,7 +152,7 @@ credential, or a decision that is yours:
    first time you run it.
 2. **Email.** Password resets and welcome messages are kept in an outbox, shown
    under Settings, instead of being sent. Connecting a provider means replacing
-   `queueMail` in `lib/db/index.ts`.
+   `queueMail` in `lib/db/local/repository.ts` and `lib/db/remote/repository.ts`.
 3. **Payments.** Switching plan applies its limits immediately and bills
    nothing. Gate `changePlanAction` behind a provider's webhook before charging.
 4. **Photographs.** Until a dish has one, the menu shows a drawing coloured from
@@ -126,10 +163,11 @@ Smaller ones:
 
 - **`AUTH_SECRET` must be set before deploying.** Without it the session cookie
   is signed with a documented development fallback.
-- **Files on disk.** Photos go to `public/uploads/` and the store writes to
-  `.data/`, which suits one server or a container with a volume. A host with no
-  persistent disk needs `app/api/upload/route.ts` pointed at object storage and
-  the store swapped for a database.
+- **Supabase is written but unverified.** `lib/db/remote/` implements every
+  repository function against the schema in `supabase/migrations/`, and the
+  migration has not been run anywhere yet — so that code has never executed.
+  Run it, then `/api/db-check?write=1`, before trusting a deployment. Until
+  then the local store is what is actually proven.
 - **`npm run lint` does not run.** `eslint.config.mjs` is a flat config from a
   newer scaffold that Next 14's `next lint` cannot read, and
   `eslint-config-next` is not installed. This predates the product code; the

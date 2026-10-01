@@ -1,14 +1,11 @@
-import { promises as fs } from "node:fs";
-import { randomUUID } from "node:crypto";
-import path from "node:path";
 import { getAuth } from "@/lib/auth/session";
+import { storePhoto } from "@/lib/storage/photos";
 
 /**
  * Step 1 of the home page: the owner's photo of a dish.
  *
- * Writes into `public/uploads/`, which is right for one server or a container
- * with a volume. On a host with no persistent disk this is the one function to
- * point at object storage — everything else only ever sees the returned path.
+ * Where the file ends up is `lib/storage/photos.ts`'s problem — a folder on a
+ * machine with a disk, Supabase Storage on a deployment.
  */
 
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -50,14 +47,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const bytes = Buffer.from(await file.arrayBuffer());
-
-  // The name is generated. An uploaded filename is attacker-controlled and has
-  // no business deciding where anything lands.
-  const filename = `${auth.restaurant.id}-${randomUUID()}.${extension}`;
-  const directory = path.join(process.cwd(), "public", "uploads");
-  await fs.mkdir(directory, { recursive: true });
-  await fs.writeFile(path.join(directory, filename), bytes);
-
-  return Response.json({ url: `/uploads/${filename}`, bytes: file.size });
+  try {
+    const stored = await storePhoto(file, {
+      restaurantId: auth.restaurant.id,
+      extension,
+    });
+    return Response.json(stored);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "The upload failed.";
+    console.error("[dish360] photo upload failed", error);
+    return Response.json({ error: message }, { status: 500 });
+  }
 }

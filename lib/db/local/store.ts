@@ -1,7 +1,8 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { Database } from "@/lib/types";
-import { buildSeed } from "./seed";
+import { refuseLocalStoreInProduction } from "../guard";
+import { buildSeed } from "../seed";
 
 /**
  * File-backed JSON store.
@@ -88,6 +89,8 @@ async function persist(db: Database): Promise<void> {
 }
 
 export async function read(): Promise<Database> {
+  refuseLocalStoreInProduction();
+
   const store = state();
   if (store.cache) return store.cache;
 
@@ -132,6 +135,8 @@ export function invalidate(): void {
 }
 
 export async function resetToSeed(): Promise<Database> {
+  refuseLocalStoreInProduction();
+
   const seeded = buildSeed();
   await persist(seeded);
   state().cache = seeded;
