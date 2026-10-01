@@ -63,6 +63,14 @@ export default function FluidCanvasBackground() {
       time += 1;
       scrollY += (targetScrollY - scrollY) * 0.08;
 
+      // A window with no height — a hidden tab, a mid-orientation-change phone —
+      // makes the `% height` below NaN, and a NaN gradient stop throws hard
+      // enough to take the whole page down with it. Wait for a real size.
+      if (width < 1 || height < 1) {
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
+
       ctx.fillStyle = "#131313";
       ctx.fillRect(0, 0, width, height);
 
