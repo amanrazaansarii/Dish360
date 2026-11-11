@@ -324,7 +324,7 @@ export default function CodesManager({
                         <input type="hidden" name="codeId" value={row.id} />
                         <button
                           type="submit"
-                          className="text-[12px] font-medium text-ink-dim transition-colors hover:text-ink"
+                          className="tap-target text-[12px] font-medium text-ink-dim transition-colors hover:text-ink"
                         >
                           {row.active ? "Pause it" : "Use it again"}
                         </button>
@@ -335,7 +335,7 @@ export default function CodesManager({
                         <button
                           type="submit"
                           aria-label={`Delete ${row.label}`}
-                          className="inline-flex items-center gap-1.5 text-[12px] font-medium text-ink-dim transition-colors hover:text-red-300"
+                          className="tap-target inline-flex items-center gap-1.5 text-[12px] font-medium text-ink-dim transition-colors hover:text-red-300"
                         >
                           <Trash2 className="h-3 w-3" />
                           Delete

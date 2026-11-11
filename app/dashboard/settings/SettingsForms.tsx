@@ -226,11 +226,15 @@ export default function SettingsForms({
 
           <div className="mt-5 flex flex-col gap-2.5">
             {restaurant.hours.map((entry) => (
+              // Four columns need about 400px and a phone gives the panel 295,
+              // which pushed "Closed" clean off the right edge — the day could
+              // not be marked shut at all on a phone. Below `sm` the day name
+              // takes its own row and the three controls share the width.
               <div
                 key={entry.day}
-                className="grid grid-cols-[104px_1fr_1fr_auto] items-center gap-3"
+                className="grid grid-cols-[1fr_1fr_auto] items-center gap-x-3 gap-y-1.5 border-b border-white/[0.04] pb-2.5 last:border-0 last:pb-0 sm:grid-cols-[104px_1fr_1fr_auto] sm:gap-y-0 sm:border-0 sm:pb-0"
               >
-                <span className="text-[13px] font-medium text-ink-plain">
+                <span className="col-span-3 text-[13px] font-medium text-ink-plain sm:col-span-1">
                   {DAY_NAMES[entry.day]}
                 </span>
                 <input
@@ -442,7 +446,7 @@ export default function SettingsForms({
                 href="/api/db-check"
                 target="_blank"
                 rel="noreferrer"
-                className="text-[12px] font-semibold text-sage hover:underline"
+                className="tap-target text-[12px] font-semibold text-sage hover:underline"
               >
                 Check the connection
               </a>

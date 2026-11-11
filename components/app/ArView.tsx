@@ -97,7 +97,7 @@ export default function ArView({
       <header className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <Link
           href={linkTo(`/m/${restaurant.slug}/${dish.id}`)}
-          className="inline-flex items-center gap-2 text-[13px] font-medium text-ink-dim transition-colors hover:text-ink"
+          className="tap-target inline-flex items-center gap-2 text-[13px] font-medium text-ink-dim transition-colors hover:text-ink"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back

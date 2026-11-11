@@ -14,7 +14,7 @@ import { seededUnit } from "@/lib/utils";
  * Bump when the generator changes shape or colour. It feeds the model routes'
  * ETag, so an improved mesh reaches browsers that cached the previous one.
  */
-export const GEOMETRY_VERSION = 2;
+export const GEOMETRY_VERSION = 5;
 
 export interface Primitive {
   name: string;
@@ -95,6 +95,14 @@ function lathe(
   mesh: MeshBuilder,
   profile: [number, number][],
   radialSegments: number,
+  /**
+   * Radius multiplier per angle and row. Food is not turned on a lathe, and a
+   * perfectly circular patty is the single clearest tell that a mesh was
+   * generated. Keep the deviation small — the normals here come from the
+   * profile tangent and ignore the wobble, which reads fine under a few
+   * percent and starts to shade wrongly past about ten.
+   */
+  wobble?: (theta: number, row: number) => number,
 ): void {
   const base = mesh.positions.length / 3;
   const rows = profile.length;
@@ -111,8 +119,10 @@ function lathe(
       const theta = (segment / radialSegments) * Math.PI * 2;
       const cos = Math.cos(theta);
       const sin = Math.sin(theta);
+      // The seam segment repeats theta 0 exactly, so the wobble closes.
+      const scaled = wobble ? radius * wobble(theta, row) : radius;
 
-      mesh.positions.push(radius * cos, height, radius * sin);
+      mesh.positions.push(scaled * cos, height, scaled * sin);
       const [nx, ny, nz] = normalise(tangentY * cos, -tangentR, tangentY * sin);
       mesh.normals.push(nx, ny, nz);
       mesh.uvs.push(segment / radialSegments, row / Math.max(1, rows - 1));
@@ -237,6 +247,177 @@ function sphere(
       const d = c + 1;
       mesh.indices.push(a, c, b, b, c, d);
     }
+  }
+}
+
+/**
+ * Sphere with independent radii. Sesame on a real bun is a flattened teardrop
+ * lying along the surface, not a ball sitting on it — spheres at this size read
+ * as pinheads and catch the light in a way that looks like plastic.
+ */
+function ellipsoid(
+  mesh: MeshBuilder,
+  cx: number,
+  cy: number,
+  cz: number,
+  rx: number,
+  ry: number,
+  rz: number,
+  yaw: number,
+  segments = 10,
+  rings = 6,
+): void {
+  const base = mesh.positions.length / 3;
+  const cosYaw = Math.cos(yaw);
+  const sinYaw = Math.sin(yaw);
+
+  for (let ring = 0; ring <= rings; ring += 1) {
+    const phi = (ring / rings) * Math.PI;
+    for (let segment = 0; segment <= segments; segment += 1) {
+      const theta = (segment / segments) * Math.PI * 2;
+      const ux = Math.sin(phi) * Math.cos(theta);
+      const uy = Math.cos(phi);
+      const uz = Math.sin(phi) * Math.sin(theta);
+
+      const px = ux * rx;
+      const py = uy * ry;
+      const pz = uz * rz;
+      // Normal of a scaled sphere is the point divided by the squared radii,
+      // not the unit vector — otherwise a flattened seed shades like a ball.
+      const [nx, ny, nz] = normalise(ux / rx, uy / ry, uz / rz);
+
+      mesh.positions.push(
+        cx + px * cosYaw - pz * sinYaw,
+        cy + py,
+        cz + px * sinYaw + pz * cosYaw,
+      );
+      mesh.normals.push(nx * cosYaw - nz * sinYaw, ny, nx * sinYaw + nz * cosYaw);
+      mesh.uvs.push(segment / segments, ring / rings);
+    }
+  }
+
+  const stride = segments + 1;
+  for (let ring = 0; ring < rings; ring += 1) {
+    for (let segment = 0; segment < segments; segment += 1) {
+      const a = base + ring * stride + segment;
+      const b = a + 1;
+      const c = a + stride;
+      const d = c + 1;
+      mesh.indices.push(a, c, b, b, c, d);
+    }
+  }
+}
+
+/**
+ * Ruffled ring, for the lettuce frilling out from under the crown.
+ *
+ * This is the one piece of a burger that is not a stack of cylinders, and it
+ * does more work than anything else here: an irregular green edge breaking the
+ * silhouette is what makes the whole thing read as a burger rather than as a
+ * pile of discs, especially at thumbnail size on a phone.
+ *
+ * Built as a thin solid — a waved top sheet, the same sheet dropped by
+ * `thickness`, and a rim joining them — so it does not vanish when a guest
+ * orbits underneath it.
+ */
+function ruffle(
+  mesh: MeshBuilder,
+  options: {
+    innerRadius: number;
+    outerRadius: number;
+    baseY: number;
+    thickness: number;
+    /** vertical travel of the frill, peak to trough */
+    wave: number;
+    lobes: number;
+    seed: string;
+    radialSegments: number;
+  },
+): void {
+  const { innerRadius, outerRadius, baseY, thickness, wave, lobes, seed } = options;
+  const segments = options.radialSegments;
+  const rows = 4;
+  const phase = seededUnit(seed, 71) * Math.PI * 2;
+
+  // Two sheets: 0 is the upper surface, 1 the lower.
+  for (let sheet = 0; sheet < 2; sheet += 1) {
+    const drop = sheet === 0 ? 0 : -thickness;
+    const sign = sheet === 0 ? 1 : -1;
+
+    for (let row = 0; row < rows; row += 1) {
+      const t = row / (rows - 1);
+      const radius = innerRadius + (outerRadius - innerRadius) * t;
+
+      for (let segment = 0; segment <= segments; segment += 1) {
+        const theta = (segment / segments) * Math.PI * 2;
+        // Frill grows toward the outer edge; the inner edge stays tucked flat
+        // under the crown, which is how a leaf actually sits.
+        const lift =
+          Math.sin(theta * lobes + phase) * wave * t * t +
+          Math.sin(theta * (lobes * 2 + 1) + phase * 1.7) * wave * 0.3 * t;
+
+        mesh.positions.push(
+          radius * Math.cos(theta),
+          baseY + drop + lift,
+          radius * Math.sin(theta),
+        );
+        // Slope of the frill tilts the normal outward; good enough for a leaf.
+        const slope = Math.cos(theta * lobes + phase) * lobes * wave * t;
+        const [nx, ny, nz] = normalise(-slope * Math.cos(theta), 1, -slope * Math.sin(theta));
+        mesh.normals.push(nx * sign, ny * sign, nz * sign);
+        mesh.uvs.push(segment / segments, t);
+      }
+    }
+  }
+
+  const stride = segments + 1;
+  const sheetSize = rows * stride;
+  const base = mesh.positions.length / 3 - sheetSize * 2;
+
+  for (let sheet = 0; sheet < 2; sheet += 1) {
+    const offset = base + sheet * sheetSize;
+    for (let row = 0; row < rows - 1; row += 1) {
+      for (let segment = 0; segment < segments; segment += 1) {
+        const a = offset + row * stride + segment;
+        const b = a + 1;
+        const c = a + stride;
+        const d = c + 1;
+        // The lower sheet is wound the other way so it faces downward.
+        if (sheet === 0) mesh.indices.push(a, c, b, b, c, d);
+        else mesh.indices.push(a, b, c, b, d, c);
+      }
+    }
+  }
+
+  // Rim along the outer edge, closing the two sheets into a solid.
+  //
+  // It gets its own vertices rather than reusing the sheet edges: those carry
+  // the sheets' up/down normals, which shade a vertical rim almost black
+  // wherever the leaf turns edge-on to the camera — exactly at the silhouette,
+  // where it is most visible.
+  const rimBase = mesh.positions.length / 3;
+  for (let edge = 0; edge < 2; edge += 1) {
+    for (let segment = 0; segment <= segments; segment += 1) {
+      const theta = (segment / segments) * Math.PI * 2;
+      const lift =
+        Math.sin(theta * lobes + phase) * wave +
+        Math.sin(theta * (lobes * 2 + 1) + phase * 1.7) * wave * 0.3;
+      mesh.positions.push(
+        outerRadius * Math.cos(theta),
+        baseY + lift - (edge === 0 ? 0 : thickness),
+        outerRadius * Math.sin(theta),
+      );
+      mesh.normals.push(Math.cos(theta), 0, Math.sin(theta));
+      mesh.uvs.push(segment / segments, edge);
+    }
+  }
+
+  for (let segment = 0; segment < segments; segment += 1) {
+    const a = rimBase + segment;
+    const b = a + 1;
+    const c = rimBase + stride + segment;
+    const d = c + 1;
+    mesh.indices.push(a, b, c, b, d, c);
   }
 }
 
@@ -438,7 +619,11 @@ export function buildDishGeometry(input: DishGeometryInput): DishGeometry {
   } else {
     // Plated + stacked both sit on a rimmed porcelain plate.
     const plate = builder();
-    const plateRadius = 0.125;
+    // A 250mm dinner plate is right for a plated dish and wrong for a burger:
+    // it is served on a smaller one, and on a phone the extra porcelain pushes
+    // the food down to under half the frame width. 190mm keeps the burger the
+    // subject of the shot.
+    const plateRadius = form === "burger" ? 0.095 : 0.125;
     lathe(
       plate,
       [
@@ -505,49 +690,192 @@ export function buildDishGeometry(input: DishGeometryInput): DishGeometry {
       }
       primitives.push(finish(garnish, "garnish", hexToLinear("#e8d6a8"), 0, 0.4));
     } else if (form === "burger") {
-      // Bun / base, filling layers, crown.
-      const stackRadius = 0.048 * calorieScale;
-      const base = builder();
-      disc(base, 0.008, stackRadius, 0.016, 40);
-      primitives.push(finish(base, "base", hexToLinear("#c98a45"), 0, 0.6));
+      /**
+       * A burger, built the way one is actually stacked.
+       *
+       * Every layer is a surface of revolution with a hand-written profile
+       * rather than a cylinder, because the silhouette is the whole job: at
+       * thumbnail size on a phone the only thing a guest reads is the outline,
+       * and a stack of equal discs reads as coins. So the bun has a rounded
+       * heel and a domed crown, the patty bulges and overhangs, the cheese
+       * drapes past the patty and the lettuce frills out between them.
+       *
+       * Radii are in metres and sized off a real 100mm burger.
+       */
+      const r = 0.048 * calorieScale;
 
-      const filling = builder();
-      disc(filling, 0.024, stackRadius * 1.05, 0.018, 40);
-      primitives.push(finish(filling, "food", food, 0, 0.42));
+      // Slight, seeded irregularity shared by the savoury layers so they look
+      // like they were assembled rather than extruded.
+      const wobbleFor = (salt: number, amount: number) => {
+        const phase = seededUnit(seed, salt) * Math.PI * 2;
+        return (theta: number) =>
+          1 +
+          Math.sin(theta * 3 + phase) * amount +
+          Math.sin(theta * 7 + phase * 2.3) * amount * 0.45;
+      };
 
+      // --- heel: rounded underside, waist, flat cut face -------------------
+      const heel = builder();
+      lathe(
+        heel,
+        [
+          [0, 0.0005],
+          [r * 0.52, 0.0012],
+          [r * 0.84, 0.0048],
+          [r * 0.97, 0.0115],
+          [r, 0.0165],
+          [r * 0.995, 0.019],
+          [r * 0.62, 0.0196],
+          [0, 0.0198],
+        ],
+        48,
+        wobbleFor(40, 0.012),
+      );
+      primitives.push(finish(heel, "bun-heel", hexToLinear("#c6873f"), 0, 0.62));
+
+      // --- patty: overhangs the bun, domed top, charred rim ----------------
+      const pattyTop = 0.0198 + 0.0145;
+      const patty = builder();
+      lathe(
+        patty,
+        [
+          [0, 0.0198],
+          [r * 0.9, 0.0202],
+          [r * 1.05, 0.0238],
+          [r * 1.06, 0.0292],
+          [r * 0.98, pattyTop - 0.0012],
+          [r * 0.6, pattyTop],
+          [0, pattyTop + 0.0008],
+        ],
+        48,
+        // Kept under the cheese's narrowest point — see the note there.
+        wobbleFor(44, 0.02),
+      );
+      primitives.push(finish(patty, "patty", food, 0, 0.44));
+
+      // --- cheese: sits on the patty and hangs over the edge ---------------
+      /**
+       * Two constraints fight here, and both matter.
+       *
+       * The skirt has to stop well above the heel, or it buries the patty and
+       * nothing tells a guest there is meat in there. But it also has to stay
+       * wider than the patty at *every* angle: both layers wobble, and when
+       * the cheese's narrow points met the patty's wide ones the patty poked
+       * through as isolated dark chunks that read as burnt bits stuck to the
+       * cheese. Cheese 1.20r at 3% never dips below 1.15r; patty 1.06r at 2%
+       * never passes 1.09r. The gap is what shows as a clean band of meat.
+       */
       const cheese = builder();
-      disc(cheese, 0.041, stackRadius * 1.12, 0.004, 40);
-      primitives.push(finish(cheese, "cheese", hexToLinear("#e0a93c"), 0, 0.35));
+      lathe(
+        cheese,
+        [
+          [0, pattyTop + 0.0012],
+          [r * 0.75, pattyTop + 0.0008],
+          [r * 1.06, pattyTop - 0.0008],
+          [r * 1.18, pattyTop - 0.0032],
+          [r * 1.2, pattyTop - 0.0056],
+          [r * 1.15, pattyTop - 0.0062],
+        ],
+        48,
+        wobbleFor(48, 0.03),
+      );
+      primitives.push(finish(cheese, "cheese", hexToLinear("#e9a93a"), 0, 0.3));
 
-      const crown = builder();
-      foodDome(crown, {
-        radius: stackRadius,
-        height: 0.026,
-        baseY: 0.045,
-        lumpiness: 0.02,
+      // --- tomato ----------------------------------------------------------
+      const tomatoBase = pattyTop + 0.0016;
+      const tomato = builder();
+      lathe(
+        tomato,
+        [
+          [0, tomatoBase],
+          [r * 0.94, tomatoBase],
+          [r * 0.97, tomatoBase + 0.0016],
+          [r * 0.94, tomatoBase + 0.0032],
+          [0, tomatoBase + 0.0032],
+        ],
+        40,
+        wobbleFor(52, 0.02),
+      );
+      primitives.push(finish(tomato, "tomato", hexToLinear("#c0392b"), 0, 0.36));
+
+      // --- lettuce: the frill that breaks the outline ----------------------
+      const lettuce = builder();
+      ruffle(lettuce, {
+        innerRadius: r * 0.35,
+        outerRadius: r * 1.2,
+        baseY: tomatoBase + 0.0042,
+        thickness: 0.0012,
+        wave: 0.0052,
+        lobes: 9,
         seed,
-        radialSegments: 40,
-        heightSegments: 14,
+        radialSegments: 64,
       });
-      primitives.push(finish(crown, "crown", hexToLinear("#c27f3c"), 0, 0.5));
+      primitives.push(finish(lettuce, "lettuce", hexToLinear("#7cb33f"), 0, 0.5));
 
-      // Sesame.
+      // --- crown: mushroom dome, widest just above the cut -----------------
+      const crownBase = tomatoBase + 0.0052;
+      const crownApex = crownBase + 0.0265;
+      // Named, because the sesame below has to sit on exactly this surface.
+      const crownProfile: [number, number][] = [
+        [0, crownBase],
+        [r * 0.6, crownBase - 0.0004],
+        [r * 0.95, crownBase + 0.0002],
+        [r * 1.005, crownBase + 0.0042],
+        [r * 0.985, crownBase + 0.0108],
+        [r * 0.9, crownBase + 0.0168],
+        [r * 0.74, crownBase + 0.0218],
+        [r * 0.5, crownBase + 0.0252],
+        [r * 0.26, crownApex - 0.0006],
+        [0, crownApex],
+      ];
+      const crown = builder();
+      lathe(crown, crownProfile, 48, wobbleFor(56, 0.01));
+      primitives.push(finish(crown, "bun-crown", hexToLinear("#c98742"), 0, 0.55));
+
+      // --- sesame: flattened, lying along the dome -------------------------
+      /**
+       * Height of the dome at a given radius, read off the profile itself.
+       *
+       * Worth the few lines: approximating this with a cosine puts the outer
+       * seeds about a centimetre inside the bun, and they simply vanish. Only
+       * the descending part of the profile is searched, since the first rows
+       * climb outward from the centre and would match the wrong radius.
+       */
+      const crownHeightAt = (radius: number): number => {
+        const descending = crownProfile.slice(3);
+        for (let i = 0; i < descending.length - 1; i += 1) {
+          const [r0, y0] = descending[i];
+          const [r1, y1] = descending[i + 1];
+          if (radius <= r0 && radius >= r1) {
+            const span = r0 - r1;
+            const t = span === 0 ? 0 : (r0 - radius) / span;
+            return y0 + (y1 - y0) * t;
+          }
+        }
+        return radius > descending[0][0] ? descending[0][1] : crownApex;
+      };
+
       const seeds = builder();
-      for (let i = 0; i < 14; i += 1) {
+      for (let i = 0; i < 24; i += 1) {
+        // Biased toward the top of the dome, which is where they stay in life.
         const angle = seededUnit(seed, 100 + i) * Math.PI * 2;
-        const distance = stackRadius * seededUnit(seed, 130 + i) * 0.8;
-        const lift = Math.sqrt(Math.max(0, 1 - (distance / stackRadius) ** 2));
-        sphere(
+        const distance = r * 0.86 * seededUnit(seed, 130 + i) ** 0.7;
+        ellipsoid(
           seeds,
           Math.cos(angle) * distance,
-          0.045 + lift * 0.026,
+          // Sunk a fraction so the seed beds into the crust rather than
+          // perching on it.
+          crownHeightAt(distance) - 0.0006,
           Math.sin(angle) * distance,
+          0.0034,
+          0.0014,
           0.0022,
-          8,
-          5,
+          angle + seededUnit(seed, 160 + i) * 1.2,
+          10,
+          6,
         );
       }
-      primitives.push(finish(seeds, "sesame", hexToLinear("#efd9a8"), 0, 0.5));
+      primitives.push(finish(seeds, "sesame", hexToLinear("#f5e4bb"), 0, 0.44));
     } else {
       const portion = builder();
       foodDome(portion, {

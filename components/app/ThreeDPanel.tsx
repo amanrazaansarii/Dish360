@@ -189,7 +189,7 @@ export default function ThreeDPanel({
                 <input type="hidden" name="approve" value="0" />
                 <button
                   type="submit"
-                  className="text-[12.5px] font-medium text-ink-dim transition-colors hover:text-amber-200"
+                  className="tap-target text-[12.5px] font-medium text-ink-dim transition-colors hover:text-amber-200"
                 >
                   Take it back off
                 </button>
@@ -489,7 +489,7 @@ function Slider({
         onChange={(e) => onChange(Number(e.target.value))}
         className="h-1 w-full cursor-pointer appearance-none rounded-full outline-none"
         style={{
-          background: `linear-gradient(90deg, #8fb495 ${progress}%, rgba(255,255,255,0.1) ${progress}%)`,
+          backgroundImage: `linear-gradient(90deg, #8fb495 ${progress}%, rgba(255,255,255,0.1) ${progress}%)`,
         }}
       />
       {hint ? <p className="mt-1.5 text-[11px] text-ink-dim">{hint}</p> : null}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BarChart3 } from "lucide-react";
 import { requireAuth } from "@/lib/auth/session";
 import { listDishes, listEvents, listTableCodes } from "@/lib/db";
+import type { DishPerformance } from "@/lib/analytics";
 import { summarise } from "@/lib/analytics";
 import { SERIES } from "@/lib/chart-palette";
 import { BarList, Funnel, StatTile, TimeSeriesChart } from "@/components/app/charts";
@@ -19,6 +20,32 @@ import { cn, formatDuration } from "@/lib/utils";
 export const metadata: Metadata = { title: "What guests look at · Dish360" };
 
 const RANGES = [7, 30, 90] as const;
+
+/**
+ * The numeric columns of the dish table, after the dish name.
+ *
+ * Seven columns need 620px, and a phone has about 295. Rather than make an
+ * owner drag the table sideways to find out whether anything sold, the three
+ * raw counts stay and the derived ones — both percentages and the dwell time —
+ * drop below `sm`. Nothing is lost: a rate is two visible numbers divided, and
+ * the same figures are in the tiles at the top of the page.
+ */
+const NUMBER_COLUMNS: {
+  label: string;
+  onPhone: boolean;
+  value: (row: DishPerformance) => string;
+}[] = [
+  { label: "Opened", onPhone: true, value: (r) => r.views.toLocaleString("en-IN") },
+  { label: "In 3D", onPhone: true, value: (r) => r.arViews.toLocaleString("en-IN") },
+  { label: "3D rate", onPhone: false, value: (r) => `${(r.arRate * 100).toFixed(0)}%` },
+  { label: "Ordered", onPhone: true, value: (r) => r.orders.toLocaleString("en-IN") },
+  {
+    label: "Order rate",
+    onPhone: false,
+    value: (r) => `${(r.conversion * 100).toFixed(0)}%`,
+  },
+  { label: "Time on it", onPhone: false, value: (r) => formatDuration(r.avgArSeconds) },
+];
 
 export default async function InsightsPage({
   searchParams,
@@ -174,27 +201,22 @@ export default async function InsightsPage({
             </Lede>
 
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[620px] border-collapse text-left">
+              <table className="w-full border-collapse text-left sm:min-w-[620px]">
                 <thead>
                   <tr className="border-b border-white/[0.06]">
-                    {[
-                      "Dish",
-                      "Opened",
-                      "In 3D",
-                      "3D rate",
-                      "Ordered",
-                      "Order rate",
-                      "Time on it",
-                    ].map((heading, index) => (
+                    <th className="pb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-dim">
+                      Dish
+                    </th>
+                    {NUMBER_COLUMNS.map((column, index) => (
                       <th
                         // Keyed by position: two columns could share a label.
                         key={index}
                         className={cn(
-                          "pb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-dim",
-                          index > 0 && "text-right",
+                          "pb-3 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-dim",
+                          !column.onPhone && "hidden sm:table-cell",
                         )}
                       >
-                        {heading}
+                        {column.label}
                       </th>
                     ))}
                   </tr>
@@ -210,19 +232,15 @@ export default async function InsightsPage({
                           {row.name}
                         </Link>
                       </td>
-                      {[
-                        row.views.toLocaleString("en-IN"),
-                        row.arViews.toLocaleString("en-IN"),
-                        `${(row.arRate * 100).toFixed(0)}%`,
-                        row.orders.toLocaleString("en-IN"),
-                        `${(row.conversion * 100).toFixed(0)}%`,
-                        formatDuration(row.avgArSeconds),
-                      ].map((cell, index) => (
+                      {NUMBER_COLUMNS.map((column, index) => (
                         <td
                           key={index}
-                          className="py-3 text-right text-[13px] tabular-nums text-ink-plain"
+                          className={cn(
+                            "py-3 text-right text-[13px] tabular-nums text-ink-plain",
+                            !column.onPhone && "hidden sm:table-cell",
+                          )}
                         >
-                          {cell}
+                          {column.value(row)}
                         </td>
                       ))}
                     </tr>

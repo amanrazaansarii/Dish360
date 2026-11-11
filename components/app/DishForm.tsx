@@ -310,7 +310,7 @@ export default function DishForm({
                     }
                     className="h-1 w-full cursor-pointer appearance-none rounded-full outline-none"
                     style={{
-                      background: `linear-gradient(90deg, #8fb495 ${flavour[key]}%, rgba(255,255,255,0.1) ${flavour[key]}%)`,
+                      backgroundImage: `linear-gradient(90deg, #8fb495 ${flavour[key]}%, rgba(255,255,255,0.1) ${flavour[key]}%)`,
                     }}
                   />
                 </div>

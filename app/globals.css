@@ -260,3 +260,89 @@ model-viewer {
 model-viewer::part(default-ar-button) {
   display: none !important;
 }
+
+/*
+ * Touch hit areas.
+ *
+ * Several controls here are deliberately small text — "Pause it", "Delete",
+ * "Back" — because shouting them would be wrong for a screen an owner uses
+ * between orders. On a phone that leaves a 18px-tall tap target, well under
+ * the ~44px a thumb needs.
+ *
+ * So the hit area grows and the control does not. The pseudo-element is
+ * invisible, sits behind the text, and is bounded by the control's own width,
+ * so neighbouring targets cannot start stealing each other's taps. Applied
+ * only where a control is genuinely small; a button with real padding already
+ * clears the threshold.
+ *
+ * It must NOT be pushed behind with a negative z-index: that paints it under
+ * the panel the control sits on, and hit testing then lands on the panel
+ * instead of the control — an expanded area that looks right and does nothing.
+ */
+@media (pointer: coarse) {
+  .tap-target {
+    position: relative;
+  }
+
+  .tap-target::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 44px;
+    transform: translateY(-50%);
+  }
+}
+
+/*
+ * Range sliders.
+ *
+ * Left alone, the thumb is the browser's default blue — bright, unbranded, and
+ * the only saturated blue anywhere in the product. It also sat on a 4px track,
+ * which is a hard thing to catch with a thumb.
+ *
+ * The track is painted as the input's own background, because the component
+ * sets that gradient inline from the current value. So it cannot move to
+ * ::-webkit-slider-runnable-track. Instead the element keeps a 4px *content*
+ * box — all the gradient paints, thanks to background-clip — and gains padding
+ * either side, which is grabbable. The negative margin puts the layout back
+ * exactly where it was.
+ */
+input[type="range"] {
+  box-sizing: content-box;
+  background-clip: content-box;
+  /* The component supplies only a background-image now, so without this the
+     unfilled half of the track shows the UA's default white. */
+  background-color: transparent;
+  padding-block: 18px;
+  margin-block: -18px;
+  /* Firefox, and anything that ignores the thumb rules below. */
+  accent-color: #8fb495;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 9999px;
+  background: #e5e2e1;
+  border: 2px solid #1e2226;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 15px;
+  width: 15px;
+  border-radius: 9999px;
+  background: #e5e2e1;
+  border: 2px solid #1e2226;
+  cursor: pointer;
+}
+
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #aad0af;
+  outline-offset: 2px;
+}
