@@ -298,6 +298,9 @@ export default function GuestMenu({
                         key={dish.id}
                         dish={dish}
                         href={linkTo(`/m/${restaurant.slug}/${dish.id}`)}
+                        // Both carry the table through, so an order placed
+                        // from either screen still knows where it came from.
+                        arHref={linkTo(`/view/${dish.id}`)}
                         priority={index < 3}
                       />
                     ))}
@@ -344,68 +347,100 @@ export default function GuestMenu({
   );
 }
 
+/**
+ * One dish on the menu a guest scanned into.
+ *
+ * Two destinations, deliberately. The card opens the dish — price, allergens,
+ * the full description. The "See in 3D" badge opens the 3D view directly,
+ * because a guest who already knows they want to see it should not have to
+ * read a page first to get there.
+ *
+ * That is why the card is a div wrapping two sibling links rather than one
+ * `<Link>` around everything: an anchor cannot be nested inside an anchor, so
+ * a badge bolted onto the old card would not have been a link at all.
+ */
 function GuestDishCard({
   dish,
   href,
+  arHref,
   priority,
 }: {
   dish: Dish;
   href: string;
+  arHref: string;
   priority: boolean;
 }) {
   const in3d = isLiveInAr(dish);
 
   return (
-    <Link
-      href={href}
+    <div
       className={cn(
-        "group flex flex-col overflow-hidden rounded-3xl bg-surface/80 shadow-glass ring-1 ring-inset ring-white/[0.06] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-1",
+        "group relative flex flex-col overflow-hidden rounded-3xl bg-surface/80 shadow-glass ring-1 ring-inset ring-white/[0.06] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-1",
         dish.soldOut && "opacity-70",
       )}
     >
-      <div className="relative aspect-[4/3] overflow-hidden">
-        <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
-          <DishPhoto dish={dish} priority={priority} />
-        </div>
+      {/*
+        Sits above the card's own link on purpose. The overlap is deliberate
+        and settled by the z-index, not a collision: this badge takes taps in
+        its own corner, the card takes the rest. It is bigger than the plain
+        Tag it replaced because it is now something a guest presses, and a
+        label that does something should look like it does something.
+      */}
+      {in3d ? (
+        <Link
+          href={arHref}
+          aria-label={`See ${dish.name} in 3D`}
+          className="absolute left-3 top-3 z-10 rounded-full outline-none ring-offset-2 ring-offset-surface focus-visible:ring-2 focus-visible:ring-sage"
+        >
+          <Tag
+            tone="sage"
+            className="px-3 py-1.5 shadow-lg shadow-black/30 backdrop-blur-xl transition-colors hover:bg-sage/25 active:bg-sage/30"
+          >
+            <Box className="h-3.5 w-3.5" />
+            See in 3D
+          </Tag>
+        </Link>
+      ) : null}
 
-        <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-          {in3d ? (
-            <Tag tone="sage" className="backdrop-blur-xl">
-              <Box className="h-3 w-3" />
-              See in 3D
-            </Tag>
-          ) : (
-            <span />
-          )}
-          {dish.soldOut ? <Tag tone="amber">Sold out</Tag> : null}
-        </div>
-      </div>
-
-      <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-[15px] font-semibold leading-snug text-ink">{dish.name}</h3>
-        <p className="mt-2 line-clamp-2 flex-1 text-[13px] leading-relaxed text-ink-plain">
-          {dish.description}
-        </p>
-
-        {dish.dietTags.length > 0 ? (
-          <div className="mt-4 flex flex-wrap items-center gap-1.5">
-            {dish.dietTags.slice(0, 2).map((tag) => (
-              <Tag key={tag}>{DIET_LABELS[tag] ?? tag}</Tag>
-            ))}
+      <Link href={href} className="flex flex-1 flex-col">
+        <div className="relative aspect-[4/3] overflow-hidden">
+          <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-105">
+            <DishPhoto dish={dish} priority={priority} />
           </div>
-        ) : null}
 
-        <div className="mt-4 flex items-end justify-between gap-3 border-t border-white/[0.06] pt-4">
-          <span className="text-[17px] font-bold tabular-nums text-ink">
-            {formatMoney(dish.priceMinor, dish.currency)}
-          </span>
-          {dish.calories ? (
-            <span className="font-mono text-[11px] tabular-nums text-ink-dim">
-              {dish.calories} kcal
-            </span>
+          {dish.soldOut ? (
+            <div className="absolute right-3 top-3">
+              <Tag tone="amber">Sold out</Tag>
+            </div>
           ) : null}
         </div>
-      </div>
-    </Link>
+
+        <div className="flex flex-1 flex-col p-5">
+          <h3 className="text-[15px] font-semibold leading-snug text-ink">{dish.name}</h3>
+          <p className="mt-2 line-clamp-2 flex-1 text-[13px] leading-relaxed text-ink-plain">
+            {dish.description}
+          </p>
+
+          {dish.dietTags.length > 0 ? (
+            <div className="mt-4 flex flex-wrap items-center gap-1.5">
+              {dish.dietTags.slice(0, 2).map((tag) => (
+                <Tag key={tag}>{DIET_LABELS[tag] ?? tag}</Tag>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="mt-4 flex items-end justify-between gap-3 border-t border-white/[0.06] pt-4">
+            <span className="text-[17px] font-bold tabular-nums text-ink">
+              {formatMoney(dish.priceMinor, dish.currency)}
+            </span>
+            {dish.calories ? (
+              <span className="font-mono text-[11px] tabular-nums text-ink-dim">
+                {dish.calories} kcal
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </Link>
+    </div>
   );
 }

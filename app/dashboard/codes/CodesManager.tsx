@@ -100,8 +100,16 @@ export default function CodesManager({
                 </p>
               </div>
 
+              {/*
+                These two were "The whole menu" and "One dish", which read as
+                two equally normal ways to run Dish360 — and sent owners off
+                wondering how they were meant to get a code onto every dish.
+                They never were. One code per table is the whole setup; the
+                second option is for the odd printed surface that is about one
+                dish, like a table tent for a special or a window poster.
+              */}
               <div className="flex flex-col gap-2.5">
-                <FieldLabel>What it opens</FieldLabel>
+                <FieldLabel>Where this code is going</FieldLabel>
                 <input type="hidden" name="target" value={target} />
                 <div className="flex gap-1.5">
                   <button
@@ -115,7 +123,7 @@ export default function CodesManager({
                         : "bg-white/[0.04] text-ink-plain hover:bg-white/[0.08]",
                     )}
                   >
-                    The whole menu
+                    On a table
                   </button>
                   <button
                     type="button"
@@ -128,25 +136,37 @@ export default function CodesManager({
                         : "bg-white/[0.04] text-ink-plain hover:bg-white/[0.08]",
                     )}
                   >
-                    One dish
+                    On a poster
                   </button>
                 </div>
 
                 {target === "dish" ? (
-                  <select
-                    name="targetDishId"
-                    defaultValue={presetDishId}
-                    className={cn(FIELD, "mt-1")}
-                  >
-                    <option value="">Pick a dish</option>
-                    {dishes.map((dish) => (
-                      <option key={dish.id} value={dish.id}>
-                        {dish.name}
-                        {dish.liveIn3d ? "" : " — no 3D yet"}
-                      </option>
-                    ))}
-                  </select>
-                ) : null}
+                  <>
+                    <select
+                      name="targetDishId"
+                      defaultValue={presetDishId}
+                      className={cn(FIELD, "mt-1")}
+                    >
+                      <option value="">Pick a dish</option>
+                      {dishes.map((dish) => (
+                        <option key={dish.id} value={dish.id}>
+                          {dish.name}
+                          {dish.liveIn3d ? "" : " — no 3D yet"}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-ink-dim">
+                      Opens straight on that one dish — for a table tent, a window
+                      card or a takeaway insert about a single dish. Your tables do
+                      not need these.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-[11px] text-ink-dim">
+                    Opens your menu, and the guest taps whichever dish they want to
+                    see. This is the one you want for a table.
+                  </p>
+                )}
               </div>
 
               <Submit label="Make the code" disabled={planFull} />
