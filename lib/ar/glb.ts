@@ -16,6 +16,7 @@ const CHUNK_BIN = 0x004e4942; // "BIN\0"
 
 const COMPONENT_FLOAT = 5126;
 const COMPONENT_UINT = 5125;
+const COMPONENT_USHORT = 5123;
 const TARGET_ARRAY_BUFFER = 34962;
 const TARGET_ELEMENT_ARRAY_BUFFER = 34963;
 
@@ -66,7 +67,11 @@ export function encodeGlb(geometry: DishGeometry, dishName: string): Buffer {
   const materials = geometry.primitives.map((primitive) => ({
     name: primitive.name,
     pbrMetallicRoughness: {
-      baseColorFactor: primitive.baseColor,
+      // With vertex colour the colour lives per vertex (COLOR_0 multiplies
+      // the factor), so the factor goes white and keeps only the alpha.
+      baseColorFactor: primitive.colors
+        ? [1, 1, 1, primitive.baseColor[3]]
+        : primitive.baseColor,
       metallicFactor: primitive.metallic,
       roughnessFactor: primitive.roughness,
     },
@@ -92,11 +97,11 @@ export function encodeGlb(geometry: DishGeometry, dishName: string): Buffer {
       primitive.uvs.byteOffset,
       primitive.uvs.byteLength,
     );
-    const indexBuffer = Buffer.from(
-      primitive.indices.buffer,
-      primitive.indices.byteOffset,
-      primitive.indices.byteLength,
-    );
+    // 16-bit indices whenever the part has under 65,536 vertices, which is
+    // every part we make: it halves the largest block in the file.
+    const shortIndices = primitive.positions.length / 3 <= 65535;
+    const indexArray = shortIndices ? Uint16Array.from(primitive.indices) : primitive.indices;
+    const indexBuffer = Buffer.from(indexArray.buffer, indexArray.byteOffset, indexArray.byteLength);
 
     // POSITION requires min/max per the spec; viewers use it for framing.
     const min = [Infinity, Infinity, Infinity];
@@ -138,10 +143,25 @@ export function encodeGlb(geometry: DishGeometry, dishName: string): Buffer {
     });
     const uvAccessor = accessors.length - 1;
 
+    let colorAccessor: number | null = null;
+    if (primitive.colors) {
+      const colorView = pushView(
+        Buffer.from(primitive.colors.buffer, primitive.colors.byteOffset, primitive.colors.byteLength),
+        TARGET_ARRAY_BUFFER,
+      );
+      accessors.push({
+        bufferView: colorView,
+        componentType: COMPONENT_FLOAT,
+        count: primitive.colors.length / 3,
+        type: "VEC3",
+      });
+      colorAccessor = accessors.length - 1;
+    }
+
     const indexView = pushView(indexBuffer, TARGET_ELEMENT_ARRAY_BUFFER);
     accessors.push({
       bufferView: indexView,
-      componentType: COMPONENT_UINT,
+      componentType: shortIndices ? COMPONENT_USHORT : COMPONENT_UINT,
       count: primitive.indices.length,
       type: "SCALAR",
     });
@@ -152,6 +172,7 @@ export function encodeGlb(geometry: DishGeometry, dishName: string): Buffer {
         POSITION: positionAccessor,
         NORMAL: normalAccessor,
         TEXCOORD_0: uvAccessor,
+        ...(colorAccessor !== null ? { COLOR_0: colorAccessor } : {}),
       },
       indices: indexAccessor,
       material: index,

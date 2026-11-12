@@ -30,8 +30,17 @@ something real on it straight away. Delete that file to start clean.
 | `index.html` | the page itself |
 | `scrollcraft.css/js` | the scroll engine |
 | `brand.css/js` | the brand layer — tokens, glass, the QR card, the cursor |
-| `dish3d.js` | the burger you can drag, drawn on one canvas |
+| `vendor/model-viewer-4.3.1.min.js` | Google's `<model-viewer>`, self-hosted, which shows every 3D dish on the page |
+| `assets/smash-burger.glb`, `-clay.glb` | the dish, built by the product's own generator — see below |
 | `qr.js` | a real QR encoder, so the card on the page is a working code |
+
+The burger on the page is not a drawing: it is the model `lib/ar/geometry.ts`
+builds for the seed's Smash Burger, so the page never shows a better dish than
+the product makes. After changing the generator, rebuild it with
+
+```bash
+npm run models:landing
+```
 
 `/variants` holds the alternates. `app/page.tsx` and `components/*` are the
 earlier React landing page — still in the tree, no longer shown.

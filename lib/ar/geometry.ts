@@ -14,7 +14,7 @@ import { seededUnit } from "@/lib/utils";
  * Bump when the generator changes shape or colour. It feeds the model routes'
  * ETag, so an improved mesh reaches browsers that cached the previous one.
  */
-export const GEOMETRY_VERSION = 5;
+export const GEOMETRY_VERSION = 6;
 
 export interface Primitive {
   name: string;
@@ -26,6 +26,13 @@ export interface Primitive {
   baseColor: [number, number, number, number];
   metallic: number;
   roughness: number;
+  /**
+   * Optional per-vertex linear RGB. When present the glTF writer emits it as
+   * COLOR_0 with a white base colour, so the surface carries the browning,
+   * char and crumb that one flat colour per part cannot. `baseColor` stays a
+   * representative average for formats that ignore vertex colour (USDZ).
+   */
+  colors?: Float32Array;
 }
 
 export interface DishGeometry {
@@ -68,6 +75,7 @@ function finish(
   baseColor: [number, number, number, number],
   metallic: number,
   roughness: number,
+  colors?: Float32Array,
 ): Primitive {
   return {
     name,
@@ -78,7 +86,121 @@ function finish(
     baseColor,
     metallic,
     roughness,
+    ...(colors ? { colors } : {}),
   };
+}
+
+/* ------------------------------------------------------------ surface colour
+
+   Real food is never one colour. A bun is pale where it was cut and deep
+   brown where the oven reached it; a patty is mottled with char. These
+   helpers colour each vertex from where it sits on the dish, plus a little
+   value noise so no two patches match. Colours are written in sRGB hex
+   (what a designer would pick) and converted to linear for glTF. */
+
+type Rgb = [number, number, number];
+type Shade = (p: Rgb, n: Rgb) => Rgb;
+
+function hex(value: string): Rgb {
+  const v = value.replace("#", "");
+  return [0, 2, 4].map((i) => Number.parseInt(v.slice(i, i + 2), 16) / 255) as Rgb;
+}
+
+function mixRgb(a: Rgb, b: Rgb, t: number): Rgb {
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+}
+
+function shadeBy(c: Rgb, k: number): Rgb {
+  return [Math.min(1, c[0] * k), Math.min(1, c[1] * k), Math.min(1, c[2] * k)];
+}
+
+function clamp01(v: number): number {
+  return v < 0 ? 0 : v > 1 ? 1 : v;
+}
+
+function smoothstep(edge0: number, edge1: number, x: number): number {
+  const t = clamp01((x - edge0) / (edge1 - edge0));
+  return t * t * (3 - 2 * t);
+}
+
+function hash3(x: number, y: number, z: number, salt: number): number {
+  let h = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263) ^ Math.imul(z | 0, 2147483647) ^ salt;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+}
+
+/** Smooth 3-D value noise in 0..1, one octave. */
+function valueNoise(x: number, y: number, z: number, salt: number): number {
+  const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
+  const fx = x - xi, fy = y - yi, fz = z - zi;
+  const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy), w = fz * fz * (3 - 2 * fz);
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+  const c = (dx: number, dy: number, dz: number) => hash3(xi + dx, yi + dy, zi + dz, salt);
+  return lerp(
+    lerp(lerp(c(0, 0, 0), c(1, 0, 0), u), lerp(c(0, 1, 0), c(1, 1, 0), u), v),
+    lerp(lerp(c(0, 0, 1), c(1, 0, 1), u), lerp(c(0, 1, 1), c(1, 1, 1), u), v),
+    w,
+  );
+}
+
+/** Two octaves: broad patches with finer grain on top. `scale` is per metre. */
+function grain(p: Rgb, scale: number, salt: number): number {
+  const a = valueNoise(p[0] * scale, p[1] * scale, p[2] * scale, salt);
+  const b = valueNoise(p[0] * scale * 2.7, p[1] * scale * 2.7, p[2] * scale * 2.7, salt + 7);
+  return a * 0.65 + b * 0.35;
+}
+
+/** Colour every vertex already in `mesh`. Returns linear RGB for glTF COLOR_0. */
+function paint(mesh: MeshBuilder, shade: Shade): Float32Array {
+  const count = mesh.positions.length / 3;
+  const out = new Float32Array(count * 3);
+  for (let i = 0; i < count; i += 1) {
+    const p: Rgb = [mesh.positions[i * 3], mesh.positions[i * 3 + 1], mesh.positions[i * 3 + 2]];
+    const n: Rgb = [mesh.normals[i * 3], mesh.normals[i * 3 + 1], mesh.normals[i * 3 + 2]];
+    const c = shade(p, n);
+    for (let k = 0; k < 3; k += 1) out[i * 3 + k] = srgbToLinear(clamp01(c[k]) * 255);
+  }
+  return out;
+}
+
+/**
+ * Centripetal Catmull-Rom through a lathe profile, `steps` points per span.
+ * A hand-written profile has ten-odd rows; at that density the shading bands
+ * visibly and the colour gradients above have nothing to land on. The
+ * centripetal form passes through every original row and never loops at the
+ * sharp corners (the cut face of a bun) the way the uniform form does.
+ */
+function smoothProfile(profile: [number, number][], steps: number): [number, number][] {
+  if (profile.length < 3 || steps < 2) return profile;
+  const n = profile.length;
+  const at = (i: number): [number, number] => {
+    if (i < 0) return [2 * profile[0][0] - profile[1][0], 2 * profile[0][1] - profile[1][1]];
+    if (i >= n) return [2 * profile[n - 1][0] - profile[n - 2][0], 2 * profile[n - 1][1] - profile[n - 2][1]];
+    return profile[i];
+  };
+  const knot = (t: number, a: [number, number], b: [number, number]) =>
+    t + Math.max(1e-6, Math.sqrt(Math.hypot(b[0] - a[0], b[1] - a[1])));
+  const out: [number, number][] = [];
+  for (let i = 0; i < n - 1; i += 1) {
+    const p0 = at(i - 1), p1 = at(i), p2 = at(i + 1), p3 = at(i + 2);
+    const t0 = 0, t1 = knot(t0, p0, p1), t2 = knot(t1, p1, p2), t3 = knot(t2, p2, p3);
+    for (let s = 0; s < steps; s += 1) {
+      const t = t1 + ((t2 - t1) * s) / steps;
+      const point: [number, number] = [0, 0];
+      for (let k = 0; k < 2; k += 1) {
+        const a1 = ((t1 - t) / (t1 - t0)) * p0[k] + ((t - t0) / (t1 - t0)) * p1[k];
+        const a2 = ((t2 - t) / (t2 - t1)) * p1[k] + ((t - t1) / (t2 - t1)) * p2[k];
+        const a3 = ((t3 - t) / (t3 - t2)) * p2[k] + ((t - t2) / (t3 - t2)) * p3[k];
+        const b1 = ((t2 - t) / (t2 - t0)) * a1 + ((t - t0) / (t2 - t0)) * a2;
+        const b2 = ((t3 - t) / (t3 - t1)) * a2 + ((t - t1) / (t3 - t1)) * a3;
+        point[k] = ((t2 - t) / (t2 - t1)) * b1 + ((t - t1) / (t2 - t1)) * b2;
+      }
+      // The axis row must stay exactly on the axis or the lathe leaves a pinhole.
+      out.push([Math.max(0, point[0]), point[1]]);
+    }
+  }
+  out.push(profile[n - 1]);
+  return out;
 }
 
 function normalise(x: number, y: number, z: number): [number, number, number] {
@@ -718,7 +840,7 @@ export function buildDishGeometry(input: DishGeometryInput): DishGeometry {
       const heel = builder();
       lathe(
         heel,
-        [
+        smoothProfile([
           [0, 0.0005],
           [r * 0.52, 0.0012],
           [r * 0.84, 0.0048],
@@ -727,18 +849,28 @@ export function buildDishGeometry(input: DishGeometryInput): DishGeometry {
           [r * 0.995, 0.019],
           [r * 0.62, 0.0196],
           [0, 0.0198],
-        ],
-        48,
+        ], 3),
+        64,
         wobbleFor(40, 0.012),
       );
-      primitives.push(finish(heel, "bun-heel", hexToLinear("#c6873f"), 0, 0.62));
+      // Toasted underneath, golden up the side, pale crumb where it was cut.
+      const heelColours = paint(heel, (p, n) => {
+        const mottle = grain(p, 85, 11);
+        if (n[1] > 0.55 && p[1] > 0.0175) {
+          return shadeBy(mixRgb(hex("#ecd8ad"), hex("#dcc08e"), grain(p, 240, 12)), 0.97 + 0.06 * mottle);
+        }
+        if (n[1] < -0.6) return shadeBy(mixRgb(hex("#a9682f"), hex("#7c4219"), mottle), 1);
+        const side = mixRgb(hex("#b06d32"), hex("#dba660"), smoothstep(0.003, 0.0175, p[1]));
+        return shadeBy(side, 0.86 + 0.24 * mottle);
+      });
+      primitives.push(finish(heel, "bun-heel", hexToLinear("#c6873f"), 0, 0.62, heelColours));
 
       // --- patty: overhangs the bun, domed top, charred rim ----------------
       const pattyTop = 0.0198 + 0.0145;
       const patty = builder();
       lathe(
         patty,
-        [
+        smoothProfile([
           [0, 0.0198],
           [r * 0.9, 0.0202],
           [r * 1.05, 0.0238],
@@ -746,12 +878,21 @@ export function buildDishGeometry(input: DishGeometryInput): DishGeometry {
           [r * 0.98, pattyTop - 0.0012],
           [r * 0.6, pattyTop],
           [0, pattyTop + 0.0008],
-        ],
-        48,
+        ], 3),
+        64,
         // Kept under the cheese's narrowest point — see the note there.
-        wobbleFor(44, 0.02),
+        wobbleFor(44, 0.015),
       );
-      primitives.push(finish(patty, "patty", food, 0, 0.44));
+      // Seared crust: dark, mottled, a little redder on the pressed edge.
+      const pattyColours = paint(patty, (p, n) => {
+        const fine = grain(p, 420, 21);
+        const broad = grain(p, 110, 22);
+        const crust = mixRgb(hex("#2e1a0f"), hex("#6a4126"), fine);
+        const edge = mixRgb(hex("#4a2a17"), hex("#8a5532"), fine);
+        const onSide = 1 - smoothstep(0.35, 0.8, Math.abs(n[1]));
+        return shadeBy(mixRgb(crust, edge, onSide), 0.85 + 0.3 * broad);
+      });
+      primitives.push(finish(patty, "patty", food, 0, 0.5, pattyColours));
 
       // --- cheese: sits on the patty and hangs over the edge ---------------
       /**
@@ -762,24 +903,48 @@ export function buildDishGeometry(input: DishGeometryInput): DishGeometry {
        * wider than the patty at *every* angle: both layers wobble, and when
        * the cheese's narrow points met the patty's wide ones the patty poked
        * through as isolated dark chunks that read as burnt bits stuck to the
-       * cheese. Cheese 1.20r at 3% never dips below 1.15r; patty 1.06r at 2%
-       * never passes 1.09r. The gap is what shows as a clean band of meat.
+       * cheese. The square slice is narrowest at the middle of each edge,
+       * 1.11r; the patty, 1.06r at 1.5% wobble, never passes 1.09r. Below the
+       * sagging corners is what shows as a clean band of meat.
        */
+      // A slice is square, not round, and its corners sag over the patty:
+      // that silhouette is the single strongest "this is a cheeseburger" cue.
+      // The radius follows a superellipse (edges at 1.11r, corners at ~1.32r),
+      // and every point past the patty's edge drops in proportion to how far
+      // out it hangs, so the corners droop most.
+      const squareness = 4;
+      const sliceTurn = seededUnit(seed, 47) * Math.PI;
+      const square = (theta: number) => {
+        const a = theta + sliceTurn;
+        const c = Math.abs(Math.cos(a)) ** squareness;
+        const sn = Math.abs(Math.sin(a)) ** squareness;
+        return 1 / (c + sn) ** (1 / squareness);
+      };
       const cheese = builder();
       lathe(
         cheese,
-        [
+        smoothProfile([
           [0, pattyTop + 0.0012],
-          [r * 0.75, pattyTop + 0.0008],
-          [r * 1.06, pattyTop - 0.0008],
-          [r * 1.18, pattyTop - 0.0032],
-          [r * 1.2, pattyTop - 0.0056],
-          [r * 1.15, pattyTop - 0.0062],
-        ],
-        48,
-        wobbleFor(48, 0.03),
+          [r * 0.7, pattyTop + 0.0009],
+          [r * 0.98, pattyTop + 0.0002],
+          [r * 1.08, pattyTop - 0.0012],
+          [r * 1.11, pattyTop - 0.0024],
+        ], 3),
+        96,
+        (theta) => square(theta),
       );
-      primitives.push(finish(cheese, "cheese", hexToLinear("#e9a93a"), 0, 0.3));
+      for (let i = 0; i < cheese.positions.length; i += 3) {
+        const radial = Math.hypot(cheese.positions[i], cheese.positions[i + 2]);
+        const over = Math.max(0, radial - r * 1.04);
+        cheese.positions[i + 1] -= over * 0.55;
+      }
+      // Brighter where it lies flat, deeper orange where it has melted over.
+      const cheeseColours = paint(cheese, (p) => {
+        const radial = Math.hypot(p[0], p[2]);
+        const c = mixRgb(hex("#f9cf5a"), hex("#eda52a"), smoothstep(r * 0.9, r * 1.3, radial));
+        return shadeBy(c, 0.95 + 0.08 * grain(p, 160, 31));
+      });
+      primitives.push(finish(cheese, "cheese", hexToLinear("#e9a93a"), 0, 0.28, cheeseColours));
 
       // --- tomato ----------------------------------------------------------
       const tomatoBase = pattyTop + 0.0016;
@@ -796,7 +961,11 @@ export function buildDishGeometry(input: DishGeometryInput): DishGeometry {
         40,
         wobbleFor(52, 0.02),
       );
-      primitives.push(finish(tomato, "tomato", hexToLinear("#c0392b"), 0, 0.36));
+      const tomatoColours = paint(tomato, (p) => {
+        const radial = Math.hypot(p[0], p[2]);
+        return mixRgb(hex("#e2643f"), hex("#b0241a"), smoothstep(r * 0.45, r * 0.95, radial));
+      });
+      primitives.push(finish(tomato, "tomato", hexToLinear("#c0392b"), 0, 0.3, tomatoColours));
 
       // --- lettuce: the frill that breaks the outline ----------------------
       const lettuce = builder();
@@ -810,7 +979,13 @@ export function buildDishGeometry(input: DishGeometryInput): DishGeometry {
         seed,
         radialSegments: 64,
       });
-      primitives.push(finish(lettuce, "lettuce", hexToLinear("#7cb33f"), 0, 0.5));
+      // Pale near the heart of the leaf, deep green at the frilled edge.
+      const lettuceColours = paint(lettuce, (p) => {
+        const radial = Math.hypot(p[0], p[2]);
+        const c = mixRgb(hex("#a9cc62"), hex("#3f7a1e"), smoothstep(r * 0.55, r * 1.18, radial));
+        return shadeBy(c, 0.88 + 0.2 * grain(p, 220, 41));
+      });
+      primitives.push(finish(lettuce, "lettuce", hexToLinear("#7cb33f"), 0, 0.72, lettuceColours));
 
       // --- crown: mushroom dome, widest just above the cut -----------------
       const crownBase = tomatoBase + 0.0052;
@@ -829,8 +1004,18 @@ export function buildDishGeometry(input: DishGeometryInput): DishGeometry {
         [0, crownApex],
       ];
       const crown = builder();
-      lathe(crown, crownProfile, 48, wobbleFor(56, 0.01));
-      primitives.push(finish(crown, "bun-crown", hexToLinear("#c98742"), 0, 0.55));
+      lathe(crown, smoothProfile(crownProfile, 3), 72, wobbleFor(56, 0.01));
+      // The oven browns the top of a bun most and the sides least, and the cut
+      // underneath stays crumb-white. That gradient is most of why a bun reads
+      // as bread rather than as a brown plastic dome.
+      const crownColours = paint(crown, (p, n) => {
+        if (n[1] < -0.35) return mixRgb(hex("#ecd8ae"), hex("#dbc092"), grain(p, 240, 51));
+        const h = clamp01((p[1] - crownBase) / (crownApex - crownBase));
+        let c = mixRgb(hex("#e8c88f"), hex("#d08b3d"), smoothstep(0.0, 0.3, h));
+        c = mixRgb(c, hex("#8e4c1b"), smoothstep(0.32, 1, h) * 0.78);
+        return shadeBy(c, 0.86 + 0.26 * grain(p, 80, 52));
+      });
+      primitives.push(finish(crown, "bun-crown", hexToLinear("#c98742"), 0, 0.5, crownColours));
 
       // --- sesame: flattened, lying along the dome -------------------------
       /**
@@ -875,7 +1060,8 @@ export function buildDishGeometry(input: DishGeometryInput): DishGeometry {
           6,
         );
       }
-      primitives.push(finish(seeds, "sesame", hexToLinear("#f5e4bb"), 0, 0.44));
+      const seedColours = paint(seeds, (p) => mixRgb(hex("#f4e6c2"), hex("#d9bd84"), grain(p, 520, 61)));
+      primitives.push(finish(seeds, "sesame", hexToLinear("#f5e4bb"), 0, 0.4, seedColours));
     } else {
       const portion = builder();
       foodDome(portion, {

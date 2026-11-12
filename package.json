@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "models:landing": "node scripts/export-landing-models.mjs"
   },
   "dependencies": {
     "@google/model-viewer": "^4.3.1",

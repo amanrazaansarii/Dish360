@@ -61,14 +61,38 @@
   .hero__lede { margin-top: 22px; max-width: 34rem; font-size: clamp(1.08rem, 1rem + 0.35vw, 1.28rem); color: var(--sc-ink-soft); }
   .hero__cta { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; }
   .btn-sage, .btn-ghost { font-size: 1rem; padding: 14px 24px; }
-  .hero__art { position: relative; height: min(72svh, 640px); }
-  .hero__art .model { position: absolute; inset: 6% 4% 20% 22%; }
+  .hero__facts { list-style: none; margin: 30px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 0.92rem; color: var(--sc-ink-soft); }
+  .hero__facts li { display: inline-flex; align-items: center; gap: 8px; }
+  .hero__facts li::before { content: ""; width: 16px; height: 16px; border-radius: 50%; flex: none;
+    background: rgba(170,208,175,0.16) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4.5 8.2 2.2 2.2 4.8-4.8' fill='none' stroke='%23aad0af' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 16px no-repeat; }
+
+  /* model-viewer, everywhere on the page: transparent, fades in once loaded */
+  model-viewer.mv { display: block; width: 100%; height: 100%; background: transparent; --poster-color: transparent; --progress-bar-height: 0px;
+    opacity: 0; transition: opacity 600ms var(--sc-ease-out); }
+  model-viewer.mv.is-loaded { opacity: 1; }
+  model-viewer.mv:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: -2px; border-radius: 16px; }
+
+  .hero__art { position: relative; margin: 0; height: min(74svh, 660px); display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+  .hero__stage { position: relative; min-height: 0; }
+  .hero__stage model-viewer { position: absolute; inset: 0; cursor: grab; }
+  .hero__stage model-viewer:active { cursor: grabbing; }
+  .hero__hint { position: absolute; right: 4px; top: 6%; display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--d360-muted); pointer-events: none; }
+  .hero__hint svg { width: 16px; height: 16px; }
+  /* how a guest gets here: the menu row they tapped */
+  .menu-card { position: relative; z-index: 1; justify-self: start; width: min(100%, 340px); margin-top: -8%; display: grid; gap: 12px; padding: 16px 16px 14px; border-radius: 20px;
+    background: rgba(30,34,38,0.72); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: var(--d360-shadow), var(--d360-edge); }
+  .menu-card__from { display: inline-flex; align-items: center; gap: 8px; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--sc-ink-soft); }
+  .menu-card__from svg { width: 15px; height: 15px; color: var(--sc-accent); }
+  .menu-card__row { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+  .menu-card__row b { display: block; font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em; }
+  .menu-card__row small { display: block; margin-top: 2px; font-size: 0.8rem; line-height: 1.4; color: var(--sc-ink-soft); }
+  .menu-card__row em { font-style: normal; font-weight: 700; color: var(--sc-accent); white-space: nowrap; }
+  .menu-card__cta { justify-self: start; display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; background: rgba(170,208,175,0.16); color: var(--sc-accent); }
+  .menu-card__cta svg { width: 15px; height: 15px; }
   /* the table bleeds past the picture column and fades out, never a hard edge */
   .hero__art .brand-ground { left: -34%; top: -14%; width: 158%; height: 136%;
     -webkit-mask-image: radial-gradient(ellipse 50% 52% at 58% 58%, #000 40%, transparent 80%); mask-image: radial-gradient(ellipse 50% 52% at 58% 58%, #000 40%, transparent 80%); }
   .close .brand-ground { -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 45%); mask-image: linear-gradient(90deg, transparent 0%, #000 45%); }
-  .hero__art .qr-card { position: absolute; left: 0; bottom: 6%; --qr-w: clamp(170px, 14vw, 210px); }
-  .hero__note { position: absolute; right: 0; bottom: 10%; font-size: 0.8rem; color: var(--sc-ink-soft); max-width: 13rem; text-align: right; }
 
   /* ------------------------------------------------------- how it works */
   .how { padding: clamp(64px, 10vh, 120px) 0 0; }
@@ -89,7 +113,7 @@
   .aside b { display: block; color: var(--sc-ink); margin-bottom: 4px; }
 
   .stage-col { position: relative; }
-  .stage { position: sticky; top: calc(var(--bar) + 20px); height: calc(100svh - var(--bar) - 40px); border-radius: 24px; overflow: hidden;
+  .stage { container-type: inline-size; position: sticky; top: calc(var(--bar) + 20px); height: calc(100svh - var(--bar) - 40px); border-radius: 24px; overflow: hidden;
     background: radial-gradient(ellipse 90% 70% at 50% 30%, #1d2226 0%, #141618 70%); box-shadow: 0 30px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05); }
   .scene { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; visibility: hidden; transform: scale(0.97);
     transition: opacity 380ms var(--sc-ease-out), transform 380ms var(--sc-ease-out), visibility 0s linear 380ms; }
@@ -97,29 +121,50 @@
   .scene__cap { position: absolute; left: 20px; top: 18px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sc-ink-soft); }
 
   /* phones */
-  .phone { position: relative; height: min(78%, 560px); aspect-ratio: 9 / 19.5; border-radius: 34px; background: #1a1d21; box-shadow: 0 30px 70px rgba(0,0,0,0.55), 0 0 0 3px #2a2d31, inset 0 0 0 1px rgba(255,255,255,0.05); }
+  .phone { position: relative; container-type: size; flex: none; height: min(78%, 560px); aspect-ratio: 9 / 19.5; border-radius: 34px; background: #1a1d21; box-shadow: 0 30px 70px rgba(0,0,0,0.55), 0 0 0 3px #2a2d31, inset 0 0 0 1px rgba(255,255,255,0.05); }
   .phone__notch { position: absolute; top: 0; left: 50%; translate: -50% 0; width: 38%; height: 22px; background: #1a1d21; border-radius: 0 0 14px 14px; z-index: 6; }
   .phone__screen { position: absolute; inset: 3px; border-radius: 31px; overflow: hidden; background: #0d0f12; }
   /* scene 1: camera */
-  .cam-photo { position: absolute; inset: 0; }
-  .cam-photo svg { position: absolute; top: 50%; left: 50%; width: 190%; height: auto; translate: -50% -50%; }
+  /* The viewfinder: a dim, warm restaurant out of focus behind, a wooden
+     table in front, edge to edge. The dish sits on the table inside it. */
+  .cam-view { position: absolute; inset: 0; overflow: hidden;
+    background:
+      radial-gradient(circle at 18% 16%, rgba(255,196,120,0.38) 0 7%, transparent 15%),
+      radial-gradient(circle at 78% 10%, rgba(255,214,150,0.3) 0 5%, transparent 12%),
+      radial-gradient(circle at 64% 30%, rgba(255,180,110,0.22) 0 4%, transparent 10%),
+      radial-gradient(circle at 34% 34%, rgba(255,205,140,0.16) 0 3%, transparent 8%),
+      radial-gradient(ellipse 120% 70% at 50% 20%, #3b2f25 0%, #1d1713 70%); }
+  .cam-table { position: absolute; left: -10%; right: -10%; top: 54%; bottom: 0;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.35), transparent 30%),
+      repeating-linear-gradient(92deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 9px, rgba(0,0,0,0.05) 9px 11px, transparent 11px 23px),
+      linear-gradient(180deg, #5a4030 0%, #3f2c20 55%, #2c1f17 100%);
+    box-shadow: 0 -1px 0 rgba(255,220,180,0.12); }
+  model-viewer.cam-model { position: absolute; left: 4%; right: 4%; top: 22%; bottom: 30%; width: auto; height: auto; }
   .cam-guide { position: absolute; inset: 22% 10% 30%; border-radius: 10px; box-shadow: 0 0 0 1px rgba(255,255,255,0.35); }
   /* A warm white, not pure #fff: a phone flash on a dark plate reads warm, and
      it is gentler on the eye when it fills a phone screen. */
   .cam-flash { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 70% at 50% 45%, #fffdf8 0%, #fbf6ec 60%, #efe7d8 100%); opacity: 0; pointer-events: none; will-change: opacity; }
   .cam-shutter { position: absolute; left: 50%; bottom: 20px; translate: -50% 0; width: 54px; height: 54px; border-radius: 50%; box-shadow: inset 0 0 0 3px rgba(255,255,255,0.85); display: grid; place-items: center; }
   .cam-shutter i { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.9); }
-  .checks { position: absolute; right: 7%; top: 50%; translate: 0 -50%; list-style: none; margin: 0; padding: 16px 18px; display: grid; gap: 10px; border-radius: 16px; background: rgba(30,34,38,0.7); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: var(--d360-shadow), var(--d360-edge); font-size: 0.9rem; }
+  /* Scene 1 lays the phone and the checklist out side by side. The phone's
+     height gives way to the stage's width, so on a narrow stage both still
+     fit rather than the list sliding over the camera. */
+  .scene--cam { display: flex; align-items: center; justify-content: center; gap: clamp(12px, 4cqw, 36px); padding: 0 12px; }
+  .scene--cam .phone { height: min(78%, 560px, calc((100cqw - 210px) * 19.5 / 9)); }
+  .checks { position: relative; flex: none; list-style: none; margin: 0; padding: 16px 18px; display: grid; gap: 10px; border-radius: 16px; background: rgba(30,34,38,0.7); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: var(--d360-shadow), var(--d360-edge); font-size: 0.9rem; }
   .checks li { display: flex; align-items: center; gap: 10px; opacity: 0.35; transition: opacity 260ms var(--sc-ease-out); }
   .checks li.is-on { opacity: 1; }
   .checks li i { width: 18px; height: 18px; border-radius: 50%; background: var(--sc-accent); display: grid; place-items: center; }
   .checks li i::after { content: ""; width: 7px; height: 4px; border: solid #131313; border-width: 0 0 2px 2px; transform: rotate(-45deg) translate(1px, -1px); }
-  .toast { position: absolute; left: 50%; bottom: 7%; translate: -50% 0; padding: 10px 16px; border-radius: 999px; background: var(--d360-sage); color: #131313; font-weight: 600; font-size: 0.9rem; white-space: nowrap; opacity: 0; transform: translateY(8px); transition: opacity 240ms var(--sc-ease-out), transform 240ms var(--sc-ease-out); }
+  .toast { position: absolute; z-index: 7; left: 50%; bottom: calc(3px + 20px + 54px + 10px); translate: -50% 0; padding: 10px 16px; border-radius: 999px; background: var(--d360-sage); color: #131313; font-weight: 600; font-size: 0.9rem; white-space: nowrap; opacity: 0; transform: translateY(8px); transition: opacity 240ms var(--sc-ease-out), transform 240ms var(--sc-ease-out); }
   /* "sent" lands after the flash has peaked, not on top of it */
   .toast.is-on { opacity: 1; transform: none; transition-duration: 360ms; transition-delay: 260ms; }
   /* scene 2: 3D */
   .s2 { display: grid; grid-template-rows: minmax(0, 1fr) auto; width: 100%; height: 100%; padding: 56px 20px 24px; }
-  .s2 .model { position: relative; }
+  .build { position: relative; min-height: 0; }
+  .build model-viewer { position: absolute; inset: 0; transition: none; }
+  .build model-viewer.is-loaded { opacity: var(--show, 0); }
   .stages { list-style: none; margin: 0; padding: 0; display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
   .stages li { padding: 8px 14px; border-radius: 999px; font-size: 0.88rem; font-weight: 600; background: rgba(255,255,255,0.05); color: var(--d360-muted); transition: background 220ms, color 220ms; }
   .stages li.is-done { background: rgba(170,208,175,0.14); color: var(--sc-accent); }
@@ -131,16 +176,38 @@
   .stand__base { width: 118%; height: 16px; margin-top: -6px; border-radius: 6px; background: linear-gradient(180deg, rgba(170,208,175,0.28), rgba(170,208,175,0.06)); box-shadow: 0 18px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.25); }
   .s3 .btn-ghost { font-size: 0.9rem; padding: 10px 18px; }
   /* scene 4: guest view */
-  .tabletop { position: absolute; left: -40%; right: -40%; bottom: -8%; height: 58%; transform-origin: 50% 100%; transform: perspective(420px) rotateX(58deg);
-    background: repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 2px, transparent 2px 22px), radial-gradient(ellipse 60% 60% at 50% 18%, #43372c, #221c17 72%); }
-  .ar-pill { position: absolute; top: 34px; left: 50%; translate: -50% 0; z-index: 4; padding: 6px 12px; border-radius: 999px; background: rgba(170,208,175,0.2); color: var(--sc-accent); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; white-space: nowrap; }
-  .bracket { position: absolute; width: 24px; height: 24px; z-index: 4; border: 0 solid rgba(170,208,175,0.6); }
+  /* The guest's screen is three bands that never overlap, sized off the
+     phone's own width (container units) so a narrow phone in a narrow
+     viewport scales everything down together instead of piling it up. */
+  .ar { container-type: size; display: flex; flex-direction: column; padding: calc(22px + 3cqh) 6cqw 5cqw; gap: 3cqh;
+    background:
+      radial-gradient(circle at 22% 14%, rgba(255,196,120,0.3) 0 6%, transparent 13%),
+      radial-gradient(circle at 80% 22%, rgba(255,214,150,0.24) 0 5%, transparent 11%),
+      radial-gradient(ellipse 120% 70% at 50% 20%, #3b2f25 0%, #1d1713 70%); }
+  /* the guest's camera sees the same room and table as the owner's did */
+  .tabletop { position: absolute; left: 0; right: 0; top: 50%; bottom: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.35), transparent 30%),
+      repeating-linear-gradient(92deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 9px, rgba(0,0,0,0.05) 9px 11px, transparent 11px 23px),
+      linear-gradient(180deg, #5a4030 0%, #3f2c20 55%, #2c1f17 100%);
+    box-shadow: 0 -1px 0 rgba(255,220,180,0.12); }
+  .ar__top { position: relative; z-index: 2; display: flex; justify-content: center; }
+  .ar-pill { padding: 0.5em 1em; border-radius: 999px; background: rgba(20,24,22,0.7); box-shadow: inset 0 0 0 1px rgba(170,208,175,0.35); color: var(--sc-accent);
+    font-size: clamp(9px, 6cqw, 11px); font-weight: 700; letter-spacing: 0.03em; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; transition: background 240ms var(--sc-ease-out); }
+  .ar-pill.is-locked { background: rgba(170,208,175,0.24); }
+  .ar__stage { position: relative; z-index: 1; flex: 1 1 auto; min-height: 0; }
+  .ar__model { position: absolute; inset: 0; will-change: transform; }
+  /* drops onto the table as the step is read (driven from the script) */
+  .ar__model.is-loaded { transition: none; opacity: calc(0.15 + 0.85 * var(--drop, 1)); transform: translate3d(0, calc((1 - var(--drop, 1)) * -40%), 0); }
+  .bracket { position: absolute; width: 12%; aspect-ratio: 1; z-index: 2; border: 0 solid rgba(170,208,175,0.6); transition: border-color 240ms var(--sc-ease-out); }
   .bracket.tl { border-left-width: 2px; border-top-width: 2px; } .bracket.tr { border-right-width: 2px; border-top-width: 2px; }
   .bracket.bl { border-left-width: 2px; border-bottom-width: 2px; } .bracket.br { border-right-width: 2px; border-bottom-width: 2px; }
-  .phone-model { position: absolute; left: 0; right: 0; top: 27%; height: 48%; z-index: 3; }
-  .ar-label { position: absolute; left: 10px; right: 10px; bottom: 14px; z-index: 4; display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 14px; background: rgba(30,34,38,0.62); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
-  .ar-label b { font-size: 0.8rem; } .ar-label span { display: block; font-size: 0.66rem; color: rgba(229,226,225,0.75); }
-  .ar-label em { font-style: normal; font-weight: 700; color: var(--sc-accent); font-size: 0.86rem; }
+  .ar-label { position: relative; z-index: 2; flex: none; display: flex; justify-content: space-between; align-items: center; gap: 6px;
+    padding: 0.8em 0.9em; border-radius: 12px; font-size: clamp(9.5px, 6.4cqw, 12px); background: rgba(30,34,38,0.72); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+  .ar-label div { min-width: 0; }
+  /* on the narrowest phones the name wraps to a second line rather than being cut */
+  .ar-label b { display: block; font-size: 1em; line-height: 1.2; overflow-wrap: anywhere; }
+  .ar-label span { display: block; margin-top: 1px; font-size: 0.82em; line-height: 1.25; color: rgba(229,226,225,0.75); }
+  .ar-label em { font-style: normal; font-weight: 700; color: var(--sc-accent); font-size: 1.05em; }
   /* scene 5: you update */
   .s5 { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 22px; align-items: center; width: 100%; padding: 56px clamp(16px, 3vw, 36px) 24px; }
   .dash { border-radius: 18px; padding: 18px; background: rgba(30,34,38,0.72); box-shadow: var(--d360-shadow), var(--d360-edge); }
@@ -246,18 +313,30 @@
     .bar-signin { display: none; }  /* the bar is already tight here */
     .bar-actions { gap: 0; }
     .hero .wrap { grid-template-columns: 1fr; padding-top: 28px; padding-bottom: 28px; }
-    .hero__art { height: 44svh; order: -1; }
-    .hero__art .qr-card { --qr-w: 128px; bottom: 0; }
-    .hero__note { display: none; }
+    /* words first on a phone, then the dish, then the card under it: three
+       blocks stacked, none sitting on another */
+    .hero__art { height: auto; grid-template-rows: auto auto; margin-top: 8px; }
+    .hero__stage { height: clamp(250px, 40svh, 360px); }
+    .hero__hint { top: auto; bottom: 4px; right: 50%; translate: 50% 0; }
+    .menu-card { justify-self: stretch; width: auto; margin-top: 10px; }
+    .hero__facts { margin-top: 24px; font-size: 0.86rem; gap: 8px 16px; }
     .walk { grid-template-columns: 1fr; margin-top: 8px; }
     .stage-col { order: -1; position: sticky; top: var(--bar); z-index: 5; height: 50svh; margin: 0 calc(var(--edge) * -1); padding: 8px var(--edge) 10px; background: var(--sc-canvas); }
     .stage { position: relative; top: 0; height: 100%; border-radius: 18px; }
     .step { min-height: 62svh; justify-content: flex-start; padding: 28px 0 40px; }
     .step h3 { font-size: 1.7rem; }
     .phone { height: 88%; }
-    .checks { right: 4%; padding: 10px 12px; font-size: 0.78rem; gap: 6px; }
+    /* the caption keeps its own strip at the top; the phone fills the rest */
+    .scene--cam, .scene--guest { padding: 34px 8px 10px; }
+    .scene--cam { gap: 10px; }
+    .scene--guest .phone { height: 100%; }
+    .scene--cam .phone { height: min(100%, calc((100cqw - 160px) * 19.5 / 9)); }
+    .scene__cap { top: 12px; }
+    .checks { padding: 10px 10px; font-size: 0.74rem; gap: 7px; }
+    .checks li { gap: 7px; }
+    .checks li i { width: 15px; height: 15px; }
+    .toast { font-size: 0.74rem; padding: 7px 11px; }
     /* sits just above the shutter instead of on top of it */
-    .toast { bottom: calc(6% + 84px); }
     .s2 { padding: 44px 12px 14px; }
     .stages li { padding: 6px 10px; font-size: 0.76rem; }
     .s5 { grid-template-columns: 1fr; padding: 44px 12px 12px; gap: 12px; }
@@ -335,7 +414,7 @@
   <!-- ================================================================ HERO -->
   <section class="hero" data-sc-act="flow">
     <div class="wrap">
-      <div data-sc-in data-sc-stagger="70">
+      <div class="hero__copy" data-sc-in data-sc-stagger="70">
         <p class="eyebrow">For restaurants and cafés</p>
         <h1>Let your guests <span>see the dish</span> before they order.</h1>
         <p class="hero__lede">Dish360 turns photos of your dishes into 3D. Guests scan a code on the table and the food appears in front of them, through their phone camera. No app to download.</p>
@@ -343,20 +422,35 @@
           <a class="btn-sage" href="https://dish360.in" rel="noopener">Book a demo</a>
           <a class="btn-ghost" href="#how">See how it works</a>
         </div>
+        <ul class="hero__facts">
+          <li>No app for guests</li>
+          <li>iPhone and Android</li>
+          <li>Change prices any time</li>
+        </ul>
       </div>
-      <div class="hero__art" aria-label="A 3D burger standing on a table, next to its table QR code">
+      <!-- The real thing, not an illustration: the model Dish360's own pipeline
+           builds for this dish (scripts/export-landing-models.mjs), shown the
+           way a guest's menu shows it. -->
+      <figure class="hero__art">
         <canvas class="brand-ground brand-ground--local" id="heroGround" aria-hidden="true"></canvas>
-        <div class="model" id="mHero"></div>
-        <article class="qr-card" aria-label="Table QR card">
-          <div class="qr-card__head">
-            <div class="qr-card__chip" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg></div>
-            <div><div class="qr-card__title">Scan Dish</div><div class="qr-card__cap">View in your space</div></div>
-          </div>
-          <div class="qr-card__well" id="qrHero"></div>
-          <div class="qr-card__foot"><div><div class="qr-card__dish">Smash Burger</div><div class="qr-card__cat">Burger</div></div><div class="qr-card__price">₹450</div></div>
-        </article>
-        <p class="hero__note">Drag the burger to turn it. This is what your guests see.</p>
-      </div>
+        <div class="hero__stage">
+          <model-viewer id="mvHero" class="mv" src="/home/assets/smash-burger.glb"
+            alt="A 3D model of a smash burger on a plate. Drag to turn it."
+            camera-controls disable-zoom disable-pan disable-tap interaction-prompt="none" touch-action="pan-y"
+            auto-rotate auto-rotate-delay="0" rotation-per-second="9deg"
+            camera-orbit="28deg 75deg 0.5m" camera-target="0m 0.035m 0m" field-of-view="24deg" min-camera-orbit="auto 50deg 0.5m" max-camera-orbit="auto 82deg 0.5m"
+            environment-image="neutral" tone-mapping="neutral" exposure="1" shadow-intensity="1.1" shadow-softness="0.8"></model-viewer>
+          <span class="hero__hint" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a7 3 0 0 0 14 0M15 8l2 2-2 2"/></svg>Drag to turn</span>
+        </div>
+        <figcaption class="menu-card" aria-label="How a guest reaches it: the menu at table 12">
+          <span class="menu-card__from"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></svg>Table 12 · menu</span>
+          <span class="menu-card__row">
+            <span><b>Smash Burger</b><small>Two smashed patties, cheddar, house sauce</small></span>
+            <em>₹450</em>
+          </span>
+          <span class="menu-card__cta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>See in 3D</span>
+        </figcaption>
+      </figure>
     </div>
   </section>
 
@@ -406,29 +500,45 @@
           <div class="stage" id="stage" data-sc-verify-state="">
             <canvas class="brand-ground brand-ground--local" id="stageGround" aria-hidden="true"></canvas>
 
-            <div class="scene is-on" data-scene="0">
+            <div class="scene scene--cam is-on" data-scene="0">
               <span class="scene__cap">Your phone</span>
               <div class="phone">
                 <div class="phone__notch"></div>
                 <div class="phone__screen">
-                  <div class="cam-photo" id="camPhoto"></div>
+                  <!-- the viewfinder fills the whole screen, as a phone camera does -->
+                  <div class="cam-view" aria-hidden="true"><span class="cam-table"></span></div>
+                  <model-viewer id="mvPhoto" class="mv cam-model" src="/home/assets/smash-burger.glb" loading="lazy"
+                    alt="The dish, framed in the phone camera"
+                    camera-orbit="18deg 76deg 0.4m" camera-target="0m 0.03m 0m" field-of-view="26deg" interaction-prompt="none" disable-tap
+                    environment-image="neutral" tone-mapping="neutral" exposure="1.15" shadow-intensity="1.2" shadow-softness="0.7"></model-viewer>
                   <div class="cam-guide"></div>
                   <div class="cam-shutter"><i id="camButton"></i></div>
                   <div class="cam-flash" id="camFlash"></div>
                 </div>
+                <span class="toast" id="sentToast">Photo sent to Dish360</span>
               </div>
               <ul class="checks" id="checks">
                 <li><i></i>Good light</li>
                 <li><i></i>Plain table</li>
                 <li><i></i>Whole dish in view</li>
               </ul>
-              <span class="toast" id="sentToast">Photo sent to Dish360</span>
             </div>
 
             <div class="scene" data-scene="1">
               <span class="scene__cap">Dish360 builds the 3D dish</span>
               <div class="s2">
-                <div class="model" id="mBuild"></div>
+                <!-- shape first (the bare mesh), then colour: two copies of the
+                     same model, crossfaded by how far the step has been read -->
+                <div class="build" id="build">
+                  <model-viewer id="mvClay" class="mv" src="/home/assets/smash-burger-clay.glb" loading="lazy"
+                    alt="The dish's 3D shape, before colour" interaction-prompt="none" disable-tap
+                    camera-orbit="25deg 68deg auto" camera-target="0m 0.04m 0m" field-of-view="24deg"
+                    environment-image="neutral" tone-mapping="neutral" exposure="1.1" shadow-intensity="1" shadow-softness="0.8"></model-viewer>
+                  <model-viewer id="mvColour" class="mv" src="/home/assets/smash-burger.glb" loading="lazy"
+                    alt="The finished 3D dish, in colour" interaction-prompt="none" disable-tap
+                    camera-orbit="25deg 68deg auto" camera-target="0m 0.04m 0m" field-of-view="24deg"
+                    environment-image="neutral" tone-mapping="neutral" exposure="1.1" shadow-intensity="1" shadow-softness="0.8"></model-viewer>
+                </div>
                 <ol class="stages" id="stages"><li>Photo</li><li>Shape</li><li>Colour</li><li>Approved</li></ol>
               </div>
             </div>
@@ -451,15 +561,22 @@
               </div>
             </div>
 
-            <div class="scene" data-scene="3">
+            <div class="scene scene--guest" data-scene="3">
               <span class="scene__cap">Your guest's phone</span>
               <div class="phone">
                 <div class="phone__notch"></div>
-                <div class="phone__screen">
-                  <div class="tabletop"></div>
-                  <span class="ar-pill" id="arPill">Looking for the table</span>
-                  <span class="bracket tl" id="bTL"></span><span class="bracket tr" id="bTR"></span><span class="bracket bl" id="bBL"></span><span class="bracket br" id="bBR"></span>
-                  <div class="phone-model" id="mGuest"></div>
+                <!-- three bands that never share space: status on top, the dish
+                     in the middle, its name and price at the bottom -->
+                <div class="phone__screen ar">
+                  <div class="tabletop" aria-hidden="true"></div>
+                  <div class="ar__top"><span class="ar-pill" id="arPill">Looking for the table</span></div>
+                  <div class="ar__stage">
+                    <span class="bracket tl" id="bTL"></span><span class="bracket tr" id="bTR"></span><span class="bracket bl" id="bBL"></span><span class="bracket br" id="bBR"></span>
+                    <model-viewer id="mvGuest" class="mv ar__model" src="/home/assets/smash-burger.glb" loading="lazy"
+                      alt="Smash Burger on the guest's table" interaction-prompt="none" disable-tap
+                      camera-orbit="30deg 64deg 0.42m" camera-target="0m 0.03m 0m" field-of-view="26deg"
+                      environment-image="neutral" tone-mapping="neutral" exposure="1.1" shadow-intensity="1.2" shadow-softness="0.6"></model-viewer>
+                  </div>
                   <div class="ar-label"><div><b>Smash Burger</b><span>Shown at real size</span></div><em id="guestPrice">₹450</em></div>
                 </div>
               </div>
@@ -567,7 +684,9 @@
 <script src="/home/scrollcraft.js"></script>
 <script src="/home/qr.js"></script>
 <script src="/home/brand.js"></script>
-<script src="/home/dish3d.js"></script>
+<!-- Google's <model-viewer>, the same viewer the app shows dishes in. Self
+     hosted (copied from node_modules, BSD-3), so the page has no CDN to wait on. -->
+<script type="module" src="/home/vendor/model-viewer-4.3.1.min.js"></script>
 <script>
 (function () {
   "use strict";
@@ -585,23 +704,25 @@
   var t0 = performance.now();
   var heroFound = function () { return reduce ? 1 : ease(clamp01((performance.now() - t0 - 200) / 1600)); };
   Brand.surface($("heroGround"), { local: true, horizon: 0.5, cx: 0.59, detect: heroFound });
-  var mHero = DishModel.create($("mHero"), { label: "Smash Burger" });
-  mHero.interactive(true); mHero.spin(9);
-  (function drop() {                       // the dish lands once the table is found
-    var t = reduce ? 1 : ease(clamp01((performance.now() - t0 - 900) / 900));
-    mHero.set({ mesh: 1, texture: 1, lift: -(1 - t) * 60, pitch: 22 });
-    if (t < 1) requestAnimationFrame(drop);
-  })();
-  Brand.qrWell($("qrHero"), URL).reveal(1);
+  // Every model fades in once it has actually loaded, never as an empty box.
+  // These run before the viewer script (a module, so deferred), so no load
+  // event can be missed.
+  document.querySelectorAll("model-viewer.mv").forEach(function (mv) {
+    mv.addEventListener("load", function () { mv.classList.add("is-loaded"); });
+  });
+  if (reduce) $("mvHero").removeAttribute("auto-rotate");
 
   var walkP = 0;
   Brand.surface($("stageGround"), { local: true, horizon: 0.62, glow: 0.8, detect: function () { return 0.15 + 0.85 * walkP; } });
   Brand.surface($("closeGround"), { local: true, horizon: 0.55, cx: 0.7, detect: 1 });
 
-  $("camPhoto").innerHTML = DishModel.photoSVG();
-  var mBuild = DishModel.create($("mBuild"), { label: "Smash Burger, being built in 3D" });
-  mBuild.interactive(true);
-  var mGuest = DishModel.create($("mGuest"), { label: "Smash Burger on the guest's table" });
+  // Turn a model to a yaw, touching the attribute only when it really moved
+  // (half a degree), since each change asks the viewer for a new frame.
+  var orbits = {};
+  function orbit(id, yaw, pitch, radius) {
+    var v = (Math.round(yaw * 2) / 2) + "deg " + pitch + "deg " + (radius || "auto");
+    if (orbits[id] !== v) { orbits[id] = v; $(id).setAttribute("camera-orbit", v); }
+  }
   var qrTable = Brand.qrWell($("qrTable"), URL);
   Brand.qrWell($("qrLive"), URL).reveal(1);
   $("dlPng").addEventListener("click", function () { Brand.download(Brand.qrPng(URL, 1024), "dish360-sample-table-code.png"); });
@@ -753,7 +874,13 @@
 
     // 2: shape, then colour, then approved
     var l2 = l[1], mesh = seg(l2, 0.08, 0.42), tex = seg(l2, 0.42, 0.72);
-    mBuild.set({ mesh: mesh, texture: tex, yaw: 25 + seg(l2, 0.7, 1) * 120, pitch: 26 });
+    // the bare shape rises in, then colour crossfades over it (same mesh,
+    // same camera, so it reads as one dish being painted)
+    $("mvClay").style.setProperty("--show", (mesh * (1 - tex)).toFixed(3));
+    $("mvClay").style.transform = "translate3d(0," + ((1 - mesh) * 18).toFixed(1) + "px,0)";
+    $("mvColour").style.setProperty("--show", tex.toFixed(3));
+    var buildYaw = 25 + seg(l2, 0.7, 1) * 120;
+    orbit("mvClay", buildYaw, 68); orbit("mvColour", buildYaw, 68);
     var stage = l2 >= 0.75 ? 3 : tex > 0 ? 2 : mesh > 0 ? 1 : 0;
     $("stages").querySelectorAll("li").forEach(function (li, i) {
       li.classList.toggle("is-on", i === stage);
@@ -766,15 +893,18 @@
 
     // 4: the table is found, the dish lands
     var l4 = l[3], drop = ease(seg(l4, 0.2, 0.55)), locked = l4 >= 0.55;
-    mGuest.set({ mesh: 1, texture: 1, lift: -(1 - drop) * 70, yaw: 30 + l4 * 100, pitch: 26, scale: 0.92 });
-    var ins = locked ? 24 : 8 + seg(l4, 0, 0.55) * 16;
+    $("mvGuest").style.setProperty("--drop", drop.toFixed(3));
+    orbit("mvGuest", 30 + l4 * 100, 64, "0.42m");
+    // the corners close in from the edge of the dish's band and lock round it
+    var ins = locked ? 9 : 1 + seg(l4, 0, 0.55) * 8;
     [["bTL", "top", "left"], ["bTR", "top", "right"], ["bBL", "bottom", "left"], ["bBR", "bottom", "right"]].forEach(function (b) {
       var el = $(b[0]);
-      el.style[b[1]] = (b[1] === "top" ? ins + 6 : ins + 8).toFixed(2) + "%";
-      el.style[b[2]] = (ins * 0.7).toFixed(2) + "%";
+      el.style[b[1]] = ins.toFixed(2) + "%";
+      el.style[b[2]] = (ins * 0.8).toFixed(2) + "%";
       el.style.borderColor = locked ? "var(--sc-accent)" : "rgba(170,208,175,0.6)";
     });
     $("arPill").textContent = locked ? "On your table" : "Looking for the table";
+    $("arPill").classList.toggle("is-locked", locked);
 
     var state = [idx, l1 >= 0.56 ? 1 : 0, Math.round(mesh * 100), Math.round(tex * 100), stage, reveal.toFixed(2),
       drop.toFixed(2), locked ? 1 : 0, walk.toFixed(2),
