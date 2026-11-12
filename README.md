@@ -14,7 +14,24 @@ The first request writes sample content into `.data/dish360.json` — a café wi
 a full menu, ten table codes and a month of traffic — so every screen has
 something real on it straight away. Delete that file to start clean.
 
-**Sign in to try it:** `owner@copperleaf.test` / `dish360demo`
+**Signing in.** Set `DISH360_ADMIN_EMAIL` and `DISH360_ADMIN_PASSWORD_HASH` in
+`.env.local` (see `.env.example`): that one account owns the sample café and
+opens the admin panel at `/admin`. Without them, a fresh clone signs in to the
+sample café as `owner@copperleaf.test` / `dish360demo`.
+
+### Two sides, plus the platform
+
+| Who | Where | What |
+|---|---|---|
+| A guest | `/t/<code>` → `/m/<slug>` → `/view/<dish>` | scans, browses, sees the dish in 3D on their table, orders (if the plan allows) |
+| A restaurant | `/dashboard` | menu, 3D (build, check, release), table codes and stands, orders, numbers, settings, asking to change plan |
+| Dish360 | `/admin` | every restaurant, subscriptions and payments, revenue and MRR, plan prices, limits and features, 3D builds and API spend, inquiries, the outbox, and opening any restaurant's dashboard to help |
+
+There is no payment gateway: plans are agreed with Dish360 and payments are
+recorded in `/admin` as they arrive (UPI, transfer). There is no email provider
+either: welcome mail, password-reset links and demo-request alerts wait in the
+outbox, which `/admin/outbox` shows in full. On Supabase, run
+`supabase/migrations/0002_platform.sql` after `0001`.
 
 ---
 
@@ -31,7 +48,7 @@ something real on it straight away. Delete that file to start clean.
 | `scrollcraft.css/js` | the scroll engine |
 | `brand.css/js` | the brand layer — tokens, glass, the QR card, the cursor |
 | `vendor/model-viewer-4.3.1.min.js` | Google's `<model-viewer>`, self-hosted, which shows every 3D dish on the page |
-| `assets/smash-burger.glb`, `-clay.glb` | the dish, built by the product's own generator — see below |
+| `assets/smash-burger.glb`, `-clay.glb`, `plate.glb` | the dish, built by the product's own generator, and the empty plate the hero sets it on — see below |
 | `qr.js` | a real QR encoder, so the card on the page is a working code |
 
 The burger on the page is not a drawing: it is the model `lib/ar/geometry.ts`

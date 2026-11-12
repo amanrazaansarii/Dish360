@@ -6,7 +6,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { Check, Download, ExternalLink, Globe, LoaderCircle, Mail } from "lucide-react";
 import {
   changePasswordAction,
-  changePlanAction,
+  requestPlanAction,
   togglePublishedAction,
   updateHoursAction,
   updatePlaceAction,
@@ -26,9 +26,17 @@ import {
   TimeAgo,
   Well,
 } from "@/components/app/ui";
-import { PLANS } from "@/lib/plans";
-import { DAY_NAMES, cn } from "@/lib/utils";
-import type { OutboxMessage, Restaurant } from "@/lib/types";
+import { planLines, priceLabel, subscriptionPrice } from "@/lib/plans";
+import { DAY_NAMES, cn, formatMoney } from "@/lib/utils";
+import type { OutboxMessage, PlanConfig, PlanId, Restaurant } from "@/lib/types";
+
+const STATUS_WORDS: Record<Restaurant["subscription"]["status"], string> = {
+  trial: "On trial",
+  active: "Active",
+  past_due: "Payment due",
+  cancelled: "Cancelled",
+  comped: "On the house",
+};
 
 const EMPTY: ActionState = {};
 
@@ -39,7 +47,15 @@ export default function SettingsForms({
   provider,
   storage,
   outbox,
+  plans,
+  currency,
+  requestedPlan,
 }: {
+  plans: PlanConfig[];
+  /** what Dish360 bills in */
+  currency: string;
+  /** a plan change this owner asked for that is still open */
+  requestedPlan: PlanId | null;
   restaurant: Restaurant;
   user: { name: string; email: string; role: string };
   counts: { dishes: number; codes: number };
@@ -76,7 +92,7 @@ export default function SettingsForms({
                   , and listed for people looking nearby.
                 </>
               ) : (
-                "Not published yet. Your table codes still work, but nobody can find you by searching."
+                "Not published yet, so guests who scan a code are told the menu is not open. You can still preview it yourself with See what guests see."
               )}
             </Lede>
           </div>
@@ -274,12 +290,46 @@ export default function SettingsForms({
       <Panel id="plan" className="scroll-mt-24 p-6">
         <SectionTitle>Your plan</SectionTitle>
         <Lede className="mt-1.5">
-          Limits apply the moment you switch. Nothing is billed here — talk to us to sort
-          out the money side.
+          Plans are arranged with Dish360. Ask to move and we will confirm it with you,
+          usually the same day; the new limits apply as soon as it is switched.
         </Lede>
 
+        {(() => {
+          const mine = plans.find((p) => p.id === restaurant.plan) ?? plans[0];
+          const sub = restaurant.subscription;
+          const price = subscriptionPrice(mine, sub);
+          return (
+            <Well className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3.5 text-[12.5px] text-ink-plain">
+              <span>
+                <span className="text-ink-dim">Plan </span>
+                <span className="font-semibold text-ink">{mine.name}</span>
+              </span>
+              <span>
+                <span className="text-ink-dim">Status </span>
+                <span className="font-semibold text-ink">{STATUS_WORDS[sub.status]}</span>
+              </span>
+              {sub.status !== "comped" ? (
+                <span>
+                  <span className="text-ink-dim">Price </span>
+                  <span className="font-semibold text-ink">
+                    {price === 0 ? "Free" : `${formatMoney(price, currency)} / ${sub.interval}`}
+                  </span>
+                </span>
+              ) : null}
+              {sub.renewsAt ? (
+                <span>
+                  <span className="text-ink-dim">{sub.status === "trial" ? "Trial ends " : "Next payment "}</span>
+                  <span className="font-semibold text-ink">
+                    {new Date(sub.renewsAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  </span>
+                </span>
+              ) : null}
+            </Well>
+          );
+        })()}
+
         <div className="mt-5 grid gap-3 lg:grid-cols-3">
-          {PLANS.map((plan) => {
+          {plans.map((plan) => {
             const current = plan.id === restaurant.plan;
             const tooManyDishes =
               plan.dishLimit !== null && counts.dishes > plan.dishLimit;
@@ -298,12 +348,15 @@ export default function SettingsForms({
                   <p className="text-[14px] font-semibold text-ink">{plan.name}</p>
                   {current ? <Tag tone="sage">Yours</Tag> : null}
                 </div>
+                <p className="mt-1 text-[13px] font-semibold text-sage">
+                  {priceLabel(plan, currency)}
+                </p>
                 <p className="mt-2 text-[12.5px] leading-relaxed text-ink-plain">
                   {plan.summary}
                 </p>
 
                 <ul className="mt-4 flex flex-1 flex-col gap-1.5">
-                  {plan.allows.map((line) => (
+                  {planLines(plan).map((line) => (
                     <li
                       key={line}
                       className="flex items-start gap-2 text-[12.5px] text-ink-plain"
@@ -318,15 +371,19 @@ export default function SettingsForms({
                   <p className="mt-4 text-[12.5px] text-sage">
                     {counts.dishes} dishes · {counts.codes} codes
                   </p>
+                ) : requestedPlan === plan.id ? (
+                  <p className="mt-4 rounded-full bg-white/[0.05] px-4 py-2.5 text-center text-[12.5px] font-semibold text-ink-plain">
+                    Asked for · we will be in touch
+                  </p>
                 ) : (
-                  <form action={changePlanAction} className="mt-4">
+                  <form action={requestPlanAction} className="mt-4">
                     <input type="hidden" name="plan" value={plan.id} />
                     <button
                       type="submit"
                       disabled={tooManyDishes || tooManyCodes}
                       className="w-full rounded-full bg-white/[0.08] px-4 py-2.5 text-[12.5px] font-semibold text-ink transition-colors hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      Switch to {plan.name}
+                      Ask to move to {plan.name}
                     </button>
                     {tooManyDishes || tooManyCodes ? (
                       <p className="mt-2 text-[11px] text-amber-200">
@@ -462,13 +519,13 @@ export default function SettingsForms({
             title="Email"
             status="Not connected"
             connected={false}
-            detail="Password resets and welcome messages are kept in the outbox below instead of being sent. Connect an email provider to deliver them."
+            detail="Password-reset links and welcome messages are kept in the outbox below instead of being sent, and Dish360 support can see them to pass on."
           />
           <Wired
             title="Payments"
             status="Not connected"
             connected={false}
-            detail="Switching plan applies straight away and is not billed. Connect a payment provider before charging anyone."
+            detail="Plans are invoiced by Dish360 and paid by UPI or bank transfer, so nothing is charged on this page."
           />
         </div>
 

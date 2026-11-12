@@ -37,8 +37,8 @@ export default function ForgotForm() {
         </Well>
 
         <p className="mt-4 text-[12px] leading-relaxed text-ink-dim">
-          Email is not connected on this deployment yet, so the message is waiting in the
-          outbox instead of an inbox. An account owner can read it under Settings.
+          The link works once and lasts an hour. Email delivery is not switched on yet,
+          so if nothing arrives, message Dish360 support: the link is waiting with us.
         </p>
 
         <ButtonLink href="/signin" size="lg" className="mt-6 w-full">

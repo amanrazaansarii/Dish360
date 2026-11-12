@@ -55,7 +55,44 @@ export interface Restaurant {
   hours: OpeningHours[];
   /** until this is true the menu is not listed and shows to nobody */
   published: boolean;
+  /**
+   * Switched off by Dish360 (unpaid, abuse). The menu and its codes stop
+   * answering guests and the owner sees why; nothing is deleted.
+   */
+  suspended: boolean;
+  /** What they pay for, set from the admin panel. */
+  subscription: Subscription;
   createdAt: string;
+}
+
+export type SubscriptionStatus =
+  /** trying it out; billed once the trial ends */
+  | "trial"
+  /** paying */
+  | "active"
+  /** a payment is late */
+  | "past_due"
+  /** stopped paying; kept on the plan they had until it is changed */
+  | "cancelled"
+  /** on the house: demos, partners, our own test accounts */
+  | "comped";
+
+export type BillingInterval = "month" | "year";
+
+export interface Subscription {
+  status: SubscriptionStatus;
+  interval: BillingInterval;
+  /**
+   * A price agreed for this place only, in the billing currency's minor unit.
+   * `null` follows the plan's list price, so changing a price in the admin
+   * panel moves everyone who has no deal of their own.
+   */
+  customPriceMinor: number | null;
+  startedAt: string;
+  /** when the next payment is due; `null` when nothing is due */
+  renewsAt: string | null;
+  trialEndsAt: string | null;
+  note: string;
 }
 
 export type DietTag =
@@ -222,14 +259,123 @@ export interface Review {
   createdAt: string;
 }
 
-/** A demo request from the landing page or the contact form. */
+export type LeadSource = "demo" | "contact" | "upgrade";
+export type LeadStatus = "new" | "contacted" | "won" | "lost";
+
+/**
+ * An inquiry: a demo request from the home page, a message from the contact
+ * page, or an owner asking to change plan from their dashboard.
+ */
 export interface Lead {
   id: string;
+  source: LeadSource;
+  status: LeadStatus;
   name: string;
   email: string;
   phone: string;
   restaurantName: string;
+  city: string;
   message: string;
+  /** set when the inquiry comes from a signed-in owner */
+  restaurantId: string | null;
+  /** the plan an owner asked to move to */
+  requestedPlan: PlanId | null;
+  /** Dish360's own notes on the conversation; never shown to the sender */
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/* ------------------------------------------------------------- platform --- */
+
+export type PaymentMethod = "upi" | "bank" | "card" | "cash" | "other";
+
+/** Money received from a restaurant, recorded from the admin panel. */
+export interface Payment {
+  id: string;
+  restaurantId: string;
+  amountMinor: number;
+  currency: string;
+  method: PaymentMethod;
+  reference: string;
+  note: string;
+  /** the period it pays for */
+  periodStart: string | null;
+  periodEnd: string | null;
+  paidAt: string;
+  createdAt: string;
+}
+
+/** One attempt at building a dish's 3D, and what it cost. */
+export interface AssetJob {
+  id: string;
+  restaurantId: string;
+  dishId: string;
+  dishName: string;
+  provider: "built-in" | "3daistudio";
+  /**
+   * succeeded · failed · fallback (the paid service was tried, failed, and the
+   * built-in builder made the model instead — the attempt may still be billed)
+   */
+  outcome: "succeeded" | "failed" | "fallback";
+  /** what the provider charges for it, in `costCurrency`'s minor unit */
+  costMinor: number;
+  costCurrency: string;
+  milliseconds: number;
+  error: string | null;
+  createdAt: string;
+}
+
+export interface PlanFeatures {
+  /** guests can send an order from the dish */
+  ordering: boolean;
+  /** the menu takes the restaurant's own colour */
+  brandColours: boolean;
+  /** the owner can download the .glb / .usdz files */
+  modelDownloads: boolean;
+  /** printable table stands */
+  printStands: boolean;
+  /** no "Menu by Dish360" line under the menu */
+  removeCredit: boolean;
+}
+
+/** A plan as Dish360 sells it. Edited in the admin panel. */
+export interface PlanConfig {
+  id: PlanId;
+  name: string;
+  summary: string;
+  /** list prices, in `PlatformSettings.currency`'s minor unit; 0 is free */
+  priceMonthlyMinor: number;
+  priceYearlyMinor: number;
+  /** `null` is unlimited */
+  dishLimit: number | null;
+  tableCodeLimit: number | null;
+  /** 3D builds a place may start per calendar month; `null` is unlimited */
+  monthlyBuildLimit: number | null;
+  features: PlanFeatures;
+  /** extra lines for the plan card, beyond the limits and features */
+  extras: string[];
+}
+
+export interface PlatformSettings {
+  /** what restaurants are billed in */
+  currency: string;
+  plans: PlanConfig[];
+  /** what the paid 3D service charges per model, for the cost reports */
+  apiCostPerBuildMinor: number;
+  apiCostCurrency: string;
+  /** how many days a new sign-up spends on trial */
+  trialDays: number;
+  updatedAt: string;
+}
+
+/** A single-use link to set a new password. Only the token's hash is kept. */
+export interface PasswordReset {
+  id: string;
+  userId: string;
+  tokenHash: string;
+  expiresAt: string;
+  usedAt: string | null;
   createdAt: string;
 }
 
@@ -255,4 +401,8 @@ export interface Database {
   reviews: Review[];
   leads: Lead[];
   outbox: OutboxMessage[];
+  payments: Payment[];
+  assetJobs: AssetJob[];
+  passwordResets: PasswordReset[];
+  settings: PlatformSettings;
 }

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type {
   AnalyticsEvent,
+  AssetJob,
   Category,
   Database,
   Dish,
@@ -11,6 +12,7 @@ import type {
   TableCode,
 } from "@/lib/types";
 import { hashPasswordSync } from "@/lib/auth/password";
+import { defaultSettings, startingSubscription } from "@/lib/plans";
 
 /**
  * Sample content.
@@ -21,11 +23,40 @@ import { hashPasswordSync } from "@/lib/auth/password";
  * rupee prices, and the same Smash Burger at ₹450 that the home page shows in
  * its QR card.
  *
- * Demo sign-in is printed in the README.
+ * Sign-in: Copperleaf belongs to the platform admin named in .env.local
+ * (DISH360_ADMIN_EMAIL / DISH360_ADMIN_PASSWORD_HASH), so one account runs the
+ * admin panel and the demo café. Without those set — a fresh clone of this
+ * public repository — it falls back to the sample login in the README.
  */
 
 const DEMO_EMAIL = "owner@copperleaf.test";
 const DEMO_PASSWORD = "dish360demo";
+
+function copperleafLogin(): { email: string; name: string; passwordHash: string } {
+  const email = process.env.DISH360_ADMIN_EMAIL?.trim().toLowerCase();
+  const hash = process.env.DISH360_ADMIN_PASSWORD_HASH?.trim();
+  if (email && hash) return { email, name: "Dish360 admin", passwordHash: hash };
+  return { email: DEMO_EMAIL, name: "Meera Joshi", passwordHash: hashPasswordSync(DEMO_PASSWORD) };
+}
+
+/** One build record per model the sample menu starts with, so the 3D counts add up. */
+export function jobsForReadyModels(dishes: Dish[]): AssetJob[] {
+  return dishes
+    .filter((d) => d.model.status === "ready")
+    .map((d) => ({
+      id: randomUUID(),
+      restaurantId: d.restaurantId,
+      dishId: d.id,
+      dishName: d.name,
+      provider: d.model.provider === "3daistudio" ? "3daistudio" : "built-in",
+      outcome: "succeeded",
+      costMinor: 0,
+      costCurrency: "USD",
+      milliseconds: 0,
+      error: null,
+      createdAt: d.model.updatedAt ?? d.updatedAt,
+    }));
+}
 
 function iso(daysAgo: number, hour = 13, minute = 0): string {
   const d = new Date();
@@ -451,6 +482,9 @@ export function buildSeed(): Database {
       plan: "pro",
       hours: caféHours(),
       published: true,
+      suspended: false,
+      // Dish360's own demo café: on the house.
+      subscription: { ...startingSubscription({ status: "comped", now: new Date(iso(120)) }), note: "Dish360 demo café" },
       createdAt: iso(120),
     },
     {
@@ -471,6 +505,8 @@ export function buildSeed(): Database {
       plan: "free",
       hours: counterHours(),
       published: true,
+      suspended: false,
+      subscription: startingSubscription({ status: "active", now: new Date(iso(48)) }),
       createdAt: iso(48),
     },
   ];
@@ -763,13 +799,11 @@ export function buildSeed(): Database {
   ];
 
   return {
-    version: 1,
+    version: 2,
     users: [
       {
         id: "user-copperleaf",
-        email: DEMO_EMAIL,
-        name: "Meera Joshi",
-        passwordHash: hashPasswordSync(DEMO_PASSWORD),
+        ...copperleafLogin(),
         restaurantId: copperleafId,
         role: "owner",
         createdAt: iso(120),
@@ -794,6 +828,10 @@ export function buildSeed(): Database {
     reviews,
     leads: [],
     outbox: [],
+    payments: [],
+    assetJobs: jobsForReadyModels(dishes),
+    passwordResets: [],
+    settings: defaultSettings(),
   };
 }
 

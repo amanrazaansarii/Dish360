@@ -396,7 +396,7 @@ export default function DishForm({
                 name="published"
                 label="On the menu"
                 hint="Guests can see this dish"
-                defaultChecked={dish?.published ?? false}
+                defaultChecked={dish?.published ?? true}
               />
               <Toggle
                 name="soldOut"

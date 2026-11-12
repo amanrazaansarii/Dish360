@@ -9,6 +9,7 @@ import {
   getRestaurant,
 } from "@/lib/db";
 import type { Restaurant, User } from "@/lib/types";
+import { isPlatformAdmin } from "./roles";
 
 /**
  * Cookie-backed sign-in.
@@ -19,6 +20,12 @@ import type { Restaurant, User } from "@/lib/types";
  */
 
 export const SESSION_COOKIE = "d360_session";
+/**
+ * Set when a platform admin opens a restaurant's dashboard from /admin. Holds
+ * `<restaurantId>.<signature>`, signed together with the session id, so it is
+ * useless to anyone else and dies with the session.
+ */
+export const ACT_AS_COOKIE = "d360_act";
 
 function secret(): string {
   // A stable fallback keeps local sign-ins working across restarts. Anything
@@ -56,7 +63,32 @@ function parse(token: string | undefined): string | null {
 
 export interface AuthContext {
   user: User;
+  /** the restaurant the dashboard is working on */
   restaurant: Restaurant;
+  /** the user runs Dish360 itself (see lib/auth/roles.ts) */
+  admin: boolean;
+  /** an admin looking at somebody else's restaurant */
+  acting: boolean;
+}
+
+function actSignature(sessionId: string, restaurantId: string): string {
+  return sign(`act:${sessionId}:${restaurantId}`);
+}
+
+function actingRestaurantId(sessionId: string): string | null {
+  const raw = cookies().get(ACT_AS_COOKIE)?.value;
+  if (!raw) return null;
+  const cut = raw.lastIndexOf(".");
+  if (cut <= 0) return null;
+  const id = raw.slice(0, cut);
+  const given = raw.slice(cut + 1);
+  const expected = actSignature(sessionId, id);
+  if (given.length !== expected.length) return null;
+  try {
+    return timingSafeEqual(Buffer.from(given), Buffer.from(expected)) ? id : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -73,11 +105,37 @@ export const getAuth = cache(async (): Promise<AuthContext | null> => {
   const user = await findUserById(session.userId);
   if (!user) return null;
 
+  const admin = isPlatformAdmin(user);
+  if (admin) {
+    const actingId = actingRestaurantId(session.id);
+    if (actingId && actingId !== user.restaurantId) {
+      const other = await getRestaurant(actingId);
+      if (other) return { user, restaurant: other, admin, acting: true };
+    }
+  }
+
   const restaurant = await getRestaurant(user.restaurantId);
   if (!restaurant) return null;
 
-  return { user, restaurant };
+  return { user, restaurant, admin, acting: false };
 });
+
+/** For /admin: work on this restaurant's dashboard as if signed in to it. */
+export async function startActingAs(restaurantId: string): Promise<boolean> {
+  const sessionId = parse(cookies().get(SESSION_COOKIE)?.value);
+  if (!sessionId) return false;
+  cookies().set(ACT_AS_COOKIE, `${restaurantId}.${actSignature(sessionId, restaurantId)}`, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+  });
+  return true;
+}
+
+export function stopActing(): void {
+  cookies().delete(ACT_AS_COOKIE);
+}
 
 /** Throws when nobody is signed in. */
 export async function requireAuth(): Promise<AuthContext> {
@@ -101,4 +159,5 @@ export async function endSession(): Promise<void> {
   const sessionId = parse(cookies().get(SESSION_COOKIE)?.value);
   if (sessionId) await deleteSession(sessionId);
   cookies().delete(SESSION_COOKIE);
+  cookies().delete(ACT_AS_COOKIE);
 }

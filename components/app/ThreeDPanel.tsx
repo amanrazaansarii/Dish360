@@ -60,9 +60,12 @@ const LIGHTS: { id: ModelEnvironment; label: string }[] = [
 export default function ThreeDPanel({
   dish,
   provider,
+  canDownload,
 }: {
   dish: Dish;
   provider: { label: string; connected: boolean; note: string };
+  /** downloading the model files is a plan feature */
+  canDownload: boolean;
 }) {
   const [state, buildAction] = useFormState(buildModelAction, EMPTY);
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -337,6 +340,7 @@ export default function ThreeDPanel({
               <ExternalLink className="h-3 w-3 text-ink-dim" />
             </Link>
 
+            {canDownload ? (
             <a
               href={dish.model.glbUrl as string}
               download
@@ -345,6 +349,7 @@ export default function ThreeDPanel({
               <Download className="h-3.5 w-3.5" />
               Download it
             </a>
+            ) : null}
 
             <form action={buildAction}>
               <input type="hidden" name="dishId" value={dish.id} />

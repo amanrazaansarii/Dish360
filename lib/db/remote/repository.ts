@@ -1,5 +1,9 @@
 import { fail, supabase } from "./client";
+import { normaliseSettings, startingSubscription } from "@/lib/plans";
 import {
+  toAssetJob,
+  toPasswordReset,
+  toPayment,
   dishColumns,
   restaurantColumns,
   tableCodeColumns,
@@ -17,6 +21,10 @@ import {
 } from "./rows";
 import type {
   AnalyticsEvent,
+  AssetJob,
+  PasswordReset,
+  Payment,
+  PlatformSettings,
   Category,
   Dish,
   DishModel,
@@ -204,6 +212,8 @@ export async function createRestaurant(
           closed: false,
         })),
       published: input.published ?? false,
+      suspended: input.suspended ?? false,
+      subscription: input.subscription ?? startingSubscription(),
     })
     .select()
     .single();
@@ -728,20 +738,45 @@ export async function createReview(input: {
 
 /* ------------------------------------------------------------------ leads --- */
 
-export async function createLead(input: Omit<Lead, "id" | "createdAt">): Promise<Lead> {
+export type NewLead = Pick<Lead, "source" | "name" | "email"> &
+  Partial<Pick<Lead, "phone" | "restaurantName" | "city" | "message" | "restaurantId" | "requestedPlan">>;
+
+export async function createLead(input: NewLead): Promise<Lead> {
   const { data, error } = await supabase()
     .from("leads")
     .insert({
+      source: input.source,
+      status: "new",
       name: input.name,
-      email: input.email,
-      phone: input.phone,
-      restaurant_name: input.restaurantName,
-      message: input.message,
+      email: input.email.trim().toLowerCase(),
+      phone: input.phone ?? "",
+      restaurant_name: input.restaurantName ?? "",
+      city: input.city ?? "",
+      message: input.message ?? "",
+      restaurant_id: input.restaurantId ?? null,
+      requested_plan: input.requestedPlan ?? null,
     })
     .select()
     .single();
   if (error) fail("save that message", error);
   return toLead(data);
+}
+
+export async function updateLead(
+  id: string,
+  patch: Partial<Pick<Lead, "status" | "notes">>,
+): Promise<Lead | null> {
+  const row: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (patch.status !== undefined) row.status = patch.status;
+  if (patch.notes !== undefined) row.notes = patch.notes;
+  const { data, error } = await supabase()
+    .from("leads")
+    .update(row)
+    .eq("id", id)
+    .select()
+    .maybeSingle();
+  if (error) fail("save that inquiry", error);
+  return data ? toLead(data) : null;
 }
 
 export async function listLeads(): Promise<Lead[]> {
@@ -777,4 +812,203 @@ export async function listOutbox(to: string): Promise<OutboxMessage[]> {
     .order("created_at", { ascending: false });
   if (error) return [];
   return (data ?? []).map(toOutbox);
+}
+
+/** Every message, for the admin panel's outbox. */
+export async function listAllOutbox(limit = 200): Promise<OutboxMessage[]> {
+  const { data, error } = await supabase()
+    .from("outbox")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) fail("list the outbox", error);
+  return (data ?? []).map(toOutbox);
+}
+
+/* ------------------------------------------------------ across everyone --- */
+/* For the admin panel only. Nothing an owner sees calls these. */
+
+export async function listUsers(): Promise<User[]> {
+  const { data, error } = await supabase().from("users").select("*");
+  if (error) fail("list the accounts", error);
+  return (data ?? []).map(toUser);
+}
+
+export async function listAllDishes(): Promise<Dish[]> {
+  const { data, error } = await supabase().from("dishes").select("*");
+  if (error) fail("list every dish", error);
+  return (data ?? []).map(toDish);
+}
+
+export async function listAllTableCodes(): Promise<TableCode[]> {
+  const { data, error } = await supabase().from("table_codes").select("*");
+  if (error) fail("list every table code", error);
+  return (data ?? []).map(toTableCode);
+}
+
+export async function listAllOrders(sinceIso?: string): Promise<Order[]> {
+  let query = supabase().from("orders").select("*");
+  if (sinceIso) query = query.gte("created_at", sinceIso);
+  const { data, error } = await query;
+  if (error) fail("list every order", error);
+  return (data ?? []).map(toOrder);
+}
+
+export async function listAllEvents(sinceIso: string): Promise<AnalyticsEvent[]> {
+  const { data, error } = await supabase()
+    .from("events")
+    .select("*")
+    .gte("created_at", sinceIso);
+  if (error) fail("list what guests did", error);
+  return (data ?? []).map(toEvent);
+}
+
+/* --------------------------------------------------------------- payments --- */
+
+export async function listPayments(restaurantId?: string): Promise<Payment[]> {
+  let query = supabase().from("payments").select("*").order("paid_at", { ascending: false });
+  if (restaurantId) query = query.eq("restaurant_id", restaurantId);
+  const { data, error } = await query;
+  if (error) fail("list the payments", error);
+  return (data ?? []).map(toPayment);
+}
+
+export async function createPayment(input: Omit<Payment, "id" | "createdAt">): Promise<Payment> {
+  const { data, error } = await supabase()
+    .from("payments")
+    .insert({
+      restaurant_id: input.restaurantId,
+      amount_minor: input.amountMinor,
+      currency: input.currency,
+      method: input.method,
+      reference: input.reference,
+      note: input.note,
+      period_start: input.periodStart,
+      period_end: input.periodEnd,
+      paid_at: input.paidAt,
+    })
+    .select()
+    .single();
+  if (error) fail("record that payment", error);
+  return toPayment(data);
+}
+
+export async function deletePayment(id: string): Promise<void> {
+  const { error } = await supabase().from("payments").delete().eq("id", id);
+  if (error) fail("remove that payment", error);
+}
+
+/* --------------------------------------------------------------- 3D builds --- */
+
+export async function recordAssetJob(input: Omit<AssetJob, "id" | "createdAt">): Promise<AssetJob> {
+  const { data, error } = await supabase()
+    .from("asset_jobs")
+    .insert({
+      restaurant_id: input.restaurantId,
+      dish_id: input.dishId,
+      dish_name: input.dishName,
+      provider: input.provider,
+      outcome: input.outcome,
+      cost_minor: input.costMinor,
+      cost_currency: input.costCurrency,
+      milliseconds: input.milliseconds,
+      error: input.error,
+    })
+    .select()
+    .single();
+  if (error) fail("record that 3D build", error);
+  return toAssetJob(data);
+}
+
+export async function listAssetJobs(options?: { restaurantId?: string; sinceIso?: string }): Promise<AssetJob[]> {
+  let query = supabase().from("asset_jobs").select("*").order("created_at", { ascending: false });
+  if (options?.restaurantId) query = query.eq("restaurant_id", options.restaurantId);
+  if (options?.sinceIso) query = query.gte("created_at", options.sinceIso);
+  const { data, error } = await query;
+  if (error) fail("list the 3D builds", error);
+  return (data ?? []).map(toAssetJob);
+}
+
+/* ---------------------------------------------------------------- settings --- */
+
+export async function getPlatformSettings(): Promise<PlatformSettings> {
+  const { data, error } = await supabase()
+    .from("platform_settings")
+    .select("data")
+    .eq("id", "platform")
+    .maybeSingle();
+  if (error) fail("load the platform settings", error);
+  return normaliseSettings((data?.data as Partial<PlatformSettings> | undefined) ?? null);
+}
+
+export async function updatePlatformSettings(
+  patch: Partial<Omit<PlatformSettings, "updatedAt">>,
+): Promise<PlatformSettings> {
+  const current = await getPlatformSettings();
+  const next = normaliseSettings({ ...current, ...patch, updatedAt: new Date().toISOString() });
+  const { error } = await supabase()
+    .from("platform_settings")
+    .upsert({ id: "platform", data: next, updated_at: next.updatedAt });
+  if (error) fail("save the platform settings", error);
+  return next;
+}
+
+/* --------------------------------------------------------- password resets --- */
+
+export async function createPasswordReset(input: {
+  userId: string;
+  tokenHash: string;
+  expiresAt: string;
+}): Promise<PasswordReset> {
+  await supabase().from("password_resets").delete().lt("expires_at", new Date().toISOString());
+  const { data, error } = await supabase()
+    .from("password_resets")
+    .insert({ user_id: input.userId, token_hash: input.tokenHash, expires_at: input.expiresAt })
+    .select()
+    .single();
+  if (error) fail("make a reset link", error);
+  return toPasswordReset(data);
+}
+
+export async function findPasswordReset(tokenHash: string): Promise<PasswordReset | null> {
+  const { data, error } = await supabase()
+    .from("password_resets")
+    .select("*")
+    .eq("token_hash", tokenHash)
+    .is("used_at", null)
+    .gt("expires_at", new Date().toISOString())
+    .maybeSingle();
+  if (error) return null;
+  return data ? toPasswordReset(data) : null;
+}
+
+/** Marks it used. Only an unused row is updated, so two tabs racing cannot both use it. */
+export async function usePasswordReset(id: string): Promise<boolean> {
+  const { data, error } = await supabase()
+    .from("password_resets")
+    .update({ used_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("used_at", null)
+    .select("id");
+  if (error) return false;
+  return (data ?? []).length === 1;
+}
+
+/** Signs the user out everywhere, after a password reset. */
+export async function deleteSessionsForUser(userId: string): Promise<void> {
+  await supabase().from("sessions").delete().eq("user_id", userId);
+}
+
+/**
+ * Removes a restaurant. Everything that belongs to it goes with it through the
+ * schema's cascades; inquiries it sent are kept, unlinked (on delete set null).
+ */
+export async function deleteRestaurant(id: string): Promise<void> {
+  const { error } = await supabase().from("restaurants").delete().eq("id", id);
+  if (error) fail("delete that restaurant", error);
+}
+
+export async function deleteLead(id: string): Promise<void> {
+  const { error } = await supabase().from("leads").delete().eq("id", id);
+  if (error) fail("delete that inquiry", error);
 }

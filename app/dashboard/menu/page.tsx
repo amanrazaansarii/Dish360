@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Plus, Utensils } from "lucide-react";
 import { requireAuth } from "@/lib/auth/session";
 import { listCategories, listDishes } from "@/lib/db";
-import { getPlan } from "@/lib/plans";
+import { planFor } from "@/lib/platform";
 import { ButtonLink, Empty, Eyebrow, Lede, PageTitle, Panel, SectionTitle, Tag } from "@/components/app/ui";
 import { formatMoney } from "@/lib/utils";
 import MenuList from "./MenuList";
@@ -22,7 +22,7 @@ export default async function MenuPage({
     listCategories(restaurant.id),
   ]);
 
-  const plan = getPlan(restaurant.plan);
+  const plan = await planFor(restaurant.plan);
   const full = plan.dishLimit !== null && dishes.length >= plan.dishLimit;
 
   // formatMoney gives "₹450"; the first character is the symbol for the row inputs.

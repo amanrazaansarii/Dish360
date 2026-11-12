@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDish, getRestaurantBySlug, listCategories, listReviews } from "@/lib/db";
 import GuestDish from "@/components/app/GuestDish";
+import { MenuUnavailable, PreviewStrip } from "@/components/app/MenuGate";
+import { canOrder, guestAccess } from "@/lib/guest";
 
 export async function generateMetadata({
   params,
@@ -29,8 +31,12 @@ export default async function GuestDishPage({
   params: { slug: string; dishId: string };
   searchParams: { table?: string };
 }) {
-  const restaurant = await getRestaurantBySlug(params.slug);
-  if (!restaurant) notFound();
+  const found = await getRestaurantBySlug(params.slug);
+  if (!found) notFound();
+
+  const access = await guestAccess(found);
+  if (!access.ok) return <MenuUnavailable name={found.name} />;
+  const { restaurant, plan } = access;
 
   const dish = await getDish(params.dishId);
   if (!dish || dish.restaurantId !== restaurant.id || !dish.published) notFound();
@@ -43,12 +49,16 @@ export default async function GuestDishPage({
   const section = sections.find((s) => s.id === dish.categoryId) ?? null;
 
   return (
-    <GuestDish
-      dish={dish}
-      restaurant={restaurant}
-      sectionName={section?.name ?? null}
-      reviews={reviews}
-      table={searchParams.table ?? null}
-    />
+    <>
+      {access.preview ? <PreviewStrip reason={access.preview} /> : null}
+      <GuestDish
+        dish={dish}
+        restaurant={restaurant}
+        sectionName={section?.name ?? null}
+        reviews={reviews}
+        table={searchParams.table ?? null}
+        canOrder={canOrder(plan, restaurant)}
+      />
+    </>
   );
 }

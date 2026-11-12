@@ -11,7 +11,6 @@ import {
   FIELD,
   GlassCard,
   Lede,
-  Well,
 } from "@/components/app/ui";
 
 const EMPTY: FormState = {};
@@ -72,16 +71,6 @@ export default function SignInForm({ next }: { next: string }) {
         </Link>
       </div>
 
-      <Well className="mt-8 px-4 py-3.5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-dim">
-          Try it without signing up
-        </p>
-        <p className="mt-1.5 font-mono text-[12px] text-ink-plain">
-          owner@copperleaf.test
-          <span className="mx-2 text-ink-dim">/</span>
-          dish360demo
-        </p>
-      </Well>
     </GlassCard>
   );
 }

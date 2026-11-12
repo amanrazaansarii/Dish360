@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { read, write } from "./store";
+import { normaliseSettings, startingSubscription } from "@/lib/plans";
 import type {
   AnalyticsEvent,
+  AssetJob,
+  PasswordReset,
+  Payment,
+  PlatformSettings,
   Category,
   Dish,
   DishModel,
@@ -160,6 +165,8 @@ export async function createRestaurant(
           closed: false,
         })),
       published: input.published ?? false,
+      suspended: input.suspended ?? false,
+      subscription: input.subscription ?? startingSubscription(),
       createdAt: new Date().toISOString(),
     };
     db.restaurants.push(restaurant);
@@ -606,10 +613,43 @@ export async function createReview(input: {
 
 /* ----------------------------------------------------------------- leads --- */
 
-export async function createLead(input: Omit<Lead, "id" | "createdAt">): Promise<Lead> {
+export type NewLead = Pick<Lead, "source" | "name" | "email"> &
+  Partial<Pick<Lead, "phone" | "restaurantName" | "city" | "message" | "restaurantId" | "requestedPlan">>;
+
+export async function createLead(input: NewLead): Promise<Lead> {
   return write((db) => {
-    const lead: Lead = { ...input, id: randomUUID(), createdAt: new Date().toISOString() };
+    const now = new Date().toISOString();
+    const lead: Lead = {
+      id: randomUUID(),
+      source: input.source,
+      status: "new",
+      name: input.name,
+      email: input.email.trim().toLowerCase(),
+      phone: input.phone ?? "",
+      restaurantName: input.restaurantName ?? "",
+      city: input.city ?? "",
+      message: input.message ?? "",
+      restaurantId: input.restaurantId ?? null,
+      requestedPlan: input.requestedPlan ?? null,
+      notes: "",
+      createdAt: now,
+      updatedAt: now,
+    };
     db.leads.push(lead);
+    return clone(lead);
+  });
+}
+
+export async function updateLead(
+  id: string,
+  patch: Partial<Pick<Lead, "status" | "notes">>,
+): Promise<Lead | null> {
+  return write((db) => {
+    const lead = db.leads.find((l) => l.id === id);
+    if (!lead) return null;
+    if (patch.status !== undefined) lead.status = patch.status;
+    if (patch.notes !== undefined) lead.notes = patch.notes;
+    lead.updatedAt = new Date().toISOString();
     return clone(lead);
   });
 }
@@ -647,4 +687,183 @@ export async function listOutbox(to: string): Promise<OutboxMessage[]> {
   return clone(
     db.outbox.filter((m) => m.to.trim().toLowerCase() === wanted),
   ).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+}
+
+/** Every message, for the admin panel's outbox. */
+export async function listAllOutbox(limit = 200): Promise<OutboxMessage[]> {
+  const db = await read();
+  return clone(db.outbox)
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+    .slice(0, limit);
+}
+
+/* ------------------------------------------------------ across everyone --- */
+/* For the admin panel only. Nothing an owner sees calls these. */
+
+export async function listUsers(): Promise<User[]> {
+  const db = await read();
+  return clone(db.users);
+}
+
+export async function listAllDishes(): Promise<Dish[]> {
+  const db = await read();
+  return clone(db.dishes);
+}
+
+export async function listAllTableCodes(): Promise<TableCode[]> {
+  const db = await read();
+  return clone(db.tableCodes);
+}
+
+export async function listAllOrders(sinceIso?: string): Promise<Order[]> {
+  const db = await read();
+  const since = sinceIso ? Date.parse(sinceIso) : 0;
+  return clone(db.orders.filter((o) => Date.parse(o.createdAt) >= since));
+}
+
+export async function listAllEvents(sinceIso: string): Promise<AnalyticsEvent[]> {
+  const db = await read();
+  const since = Date.parse(sinceIso);
+  return clone(db.events.filter((e) => Date.parse(e.createdAt) >= since));
+}
+
+/* --------------------------------------------------------------- payments --- */
+
+export async function listPayments(restaurantId?: string): Promise<Payment[]> {
+  const db = await read();
+  const rows = restaurantId ? db.payments.filter((p) => p.restaurantId === restaurantId) : db.payments;
+  return clone(rows).sort((a, b) => Date.parse(b.paidAt) - Date.parse(a.paidAt));
+}
+
+export async function createPayment(input: Omit<Payment, "id" | "createdAt">): Promise<Payment> {
+  return write((db) => {
+    const payment: Payment = { ...input, id: randomUUID(), createdAt: new Date().toISOString() };
+    db.payments.push(payment);
+    return clone(payment);
+  });
+}
+
+export async function deletePayment(id: string): Promise<void> {
+  await write((db) => {
+    db.payments = db.payments.filter((p) => p.id !== id);
+  });
+}
+
+/* --------------------------------------------------------------- 3D builds --- */
+
+export async function recordAssetJob(input: Omit<AssetJob, "id" | "createdAt">): Promise<AssetJob> {
+  return write((db) => {
+    const job: AssetJob = { ...input, id: randomUUID(), createdAt: new Date().toISOString() };
+    db.assetJobs.push(job);
+    return clone(job);
+  });
+}
+
+export async function listAssetJobs(options?: { restaurantId?: string; sinceIso?: string }): Promise<AssetJob[]> {
+  const db = await read();
+  const since = options?.sinceIso ? Date.parse(options.sinceIso) : 0;
+  return clone(
+    db.assetJobs.filter(
+      (j) =>
+        (!options?.restaurantId || j.restaurantId === options.restaurantId) &&
+        Date.parse(j.createdAt) >= since,
+    ),
+  ).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+}
+
+/* ---------------------------------------------------------------- settings --- */
+
+export async function getPlatformSettings(): Promise<PlatformSettings> {
+  const db = await read();
+  return clone(normaliseSettings(db.settings));
+}
+
+export async function updatePlatformSettings(
+  patch: Partial<Omit<PlatformSettings, "updatedAt">>,
+): Promise<PlatformSettings> {
+  return write((db) => {
+    db.settings = normaliseSettings({
+      ...db.settings,
+      ...patch,
+      updatedAt: new Date().toISOString(),
+    });
+    return clone(db.settings);
+  });
+}
+
+/* --------------------------------------------------------- password resets --- */
+
+export async function createPasswordReset(input: {
+  userId: string;
+  tokenHash: string;
+  expiresAt: string;
+}): Promise<PasswordReset> {
+  return write((db) => {
+    const now = Date.now();
+    // Expired links are useless; drop them while we are here.
+    db.passwordResets = db.passwordResets.filter((r) => Date.parse(r.expiresAt) > now);
+    const reset: PasswordReset = {
+      id: randomUUID(),
+      ...input,
+      usedAt: null,
+      createdAt: new Date(now).toISOString(),
+    };
+    db.passwordResets.push(reset);
+    return clone(reset);
+  });
+}
+
+/** A reset that is still usable: unused and not expired. */
+export async function findPasswordReset(tokenHash: string): Promise<PasswordReset | null> {
+  const db = await read();
+  const reset = db.passwordResets.find((r) => r.tokenHash === tokenHash);
+  if (!reset || reset.usedAt || Date.parse(reset.expiresAt) <= Date.now()) return null;
+  return clone(reset);
+}
+
+/** Marks it used. Returns false if somebody got there first. */
+export async function usePasswordReset(id: string): Promise<boolean> {
+  return write((db) => {
+    const reset = db.passwordResets.find((r) => r.id === id);
+    if (!reset || reset.usedAt) return false;
+    reset.usedAt = new Date().toISOString();
+    return true;
+  });
+}
+
+/** Signs the user out everywhere, after a password reset. */
+export async function deleteSessionsForUser(userId: string): Promise<void> {
+  await write((db) => {
+    db.sessions = db.sessions.filter((s) => s.userId !== userId);
+  });
+}
+
+/**
+ * Removes a restaurant and everything that belongs to it: its people (and
+ * their sessions), menu, codes, guest history, orders, payments and build log.
+ * Inquiries it sent are kept, unlinked. For the admin panel only.
+ */
+export async function deleteRestaurant(id: string): Promise<void> {
+  await write((db) => {
+    const people = new Set(db.users.filter((u) => u.restaurantId === id).map((u) => u.id));
+    db.restaurants = db.restaurants.filter((r) => r.id !== id);
+    db.users = db.users.filter((u) => u.restaurantId !== id);
+    db.sessions = db.sessions.filter((s) => !people.has(s.userId));
+    db.passwordResets = db.passwordResets.filter((r) => !people.has(r.userId));
+    db.categories = db.categories.filter((c) => c.restaurantId !== id);
+    db.dishes = db.dishes.filter((d) => d.restaurantId !== id);
+    db.tableCodes = db.tableCodes.filter((c) => c.restaurantId !== id);
+    db.events = db.events.filter((e) => e.restaurantId !== id);
+    db.orders = db.orders.filter((o) => o.restaurantId !== id);
+    db.reviews = db.reviews.filter((r) => r.restaurantId !== id);
+    db.payments = db.payments.filter((p) => p.restaurantId !== id);
+    db.assetJobs = db.assetJobs.filter((j) => j.restaurantId !== id);
+    for (const lead of db.leads) if (lead.restaurantId === id) lead.restaurantId = null;
+  });
+}
+
+export async function deleteLead(id: string): Promise<void> {
+  await write((db) => {
+    db.leads = db.leads.filter((l) => l.id !== id);
+  });
 }

@@ -13,11 +13,11 @@ export default async function SignInPage({
 }: {
   searchParams: { next?: string };
 }) {
-  // Already signed in — no reason to show the form.
-  if (await getAuth()) redirect("/dashboard");
-
   const next = searchParams.next;
   const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "";
+
+  // Already signed in — no reason to show the form.
+  if (await getAuth()) redirect(safeNext || "/dashboard");
 
   return <SignInForm next={safeNext} />;
 }

@@ -106,3 +106,33 @@ export const listLeads = db.listLeads;
 /* Outbox */
 export const queueMail = db.queueMail;
 export const listOutbox = db.listOutbox;
+export const updateLead = db.updateLead;
+export const listAllOutbox = db.listAllOutbox;
+
+/* Across every restaurant — the admin panel only */
+export const listUsers = db.listUsers;
+export const listAllDishes = db.listAllDishes;
+export const listAllTableCodes = db.listAllTableCodes;
+export const listAllOrders = db.listAllOrders;
+export const listAllEvents = db.listAllEvents;
+
+/* Billing */
+export const listPayments = db.listPayments;
+export const createPayment = db.createPayment;
+export const deletePayment = db.deletePayment;
+
+/* 3D builds and what they cost */
+export const recordAssetJob = db.recordAssetJob;
+export const listAssetJobs = db.listAssetJobs;
+
+/* Plan prices, limits and the platform's own settings */
+export const getPlatformSettings = db.getPlatformSettings;
+export const updatePlatformSettings = db.updatePlatformSettings;
+
+/* Password resets */
+export const createPasswordReset = db.createPasswordReset;
+export const findPasswordReset = db.findPasswordReset;
+export const usePasswordReset = db.usePasswordReset;
+export const deleteSessionsForUser = db.deleteSessionsForUser;
+export const deleteRestaurant = db.deleteRestaurant;
+export const deleteLead = db.deleteLead;

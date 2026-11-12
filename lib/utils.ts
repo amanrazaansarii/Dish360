@@ -142,8 +142,3 @@ export const DIET_LABELS: Record<string, string> = {
 
 export const SPICE_LABELS = ["Not spicy", "Mild", "Medium", "Hot"];
 
-export const PLAN_LABELS: Record<string, string> = {
-  free: "Free",
-  pro: "Standard",
-  enterprise: "Multi-venue",
-};

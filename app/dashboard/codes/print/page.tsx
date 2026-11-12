@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/auth/session";
 import { getDish, listTableCodes } from "@/lib/db";
 import { qrMatrix, scanUrl } from "@/lib/qr";
 import PrintBar from "./PrintBar";
+import { planFor } from "@/lib/platform";
 
 export const metadata: Metadata = {
   title: "Print the stands · Dish360",
@@ -26,6 +27,20 @@ export default async function PrintPage({
   searchParams: { code?: string; size?: string };
 }) {
   const { restaurant } = await requireAuth();
+
+  if (!(await planFor(restaurant.plan)).features.printStands) {
+    return (
+      <main className="grid min-h-screen place-items-center px-6 text-center">
+        <div className="max-w-sm">
+          <h1 className="text-2xl font-extrabold text-ink">Printable stands are not on your plan</h1>
+          <p className="mt-2 text-sm text-ink-plain">
+            Your table codes still work: download each one from Table codes, or ask us to move you up a plan.
+          </p>
+          <a href="/dashboard/settings#plan" className="mt-5 inline-block text-sm font-semibold text-sage hover:underline">See the plans</a>
+        </div>
+      </main>
+    );
+  }
 
   const host = headers().get("host") ?? "localhost:3000";
   const scheme = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";

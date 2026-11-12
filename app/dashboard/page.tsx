@@ -14,7 +14,7 @@ import { requireAuth } from "@/lib/auth/session";
 import { listDishes, listEvents, listOrders, listTableCodes } from "@/lib/db";
 import { summarise } from "@/lib/analytics";
 import { awaitingApproval, isLiveInAr } from "@/lib/dish";
-import { getPlan } from "@/lib/plans";
+import { planFor } from "@/lib/platform";
 import { SERIES } from "@/lib/chart-palette";
 import { BarList, StatTile, TimeSeriesChart } from "@/components/app/charts";
 import {
@@ -59,7 +59,7 @@ export default async function TodayPage({
   ]);
 
   const summary = summarise(events, dishes, 30);
-  const plan = getPlan(restaurant.plan);
+  const plan = await planFor(restaurant.plan);
 
   const needsApproval = dishes.filter(awaitingApproval);
   const liveIn3d = dishes.filter(isLiveInAr);

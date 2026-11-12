@@ -2,7 +2,8 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { Database } from "@/lib/types";
 import { refuseLocalStoreInProduction } from "../guard";
-import { buildSeed } from "../seed";
+import { buildSeed, jobsForReadyModels } from "../seed";
+import { normaliseSettings, normaliseSubscription } from "@/lib/plans";
 
 /**
  * File-backed JSON store.
@@ -16,7 +17,43 @@ import { buildSeed } from "../seed";
 const DATA_DIR = path.join(process.cwd(), ".data");
 const DATA_FILE = path.join(DATA_DIR, "dish360.json");
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
+
+/**
+ * Brings an older file forward without losing anything in it.
+ *
+ *   1 → 2   subscriptions and suspension on each place; inquiries gain a
+ *           source, a status and notes; payments, 3D build costs, password
+ *           resets and the platform's own settings (plan prices and limits).
+ */
+function upgrade(db: Database): Database {
+  if (db.version < 2) {
+    db.restaurants = db.restaurants.map((r) => ({
+      ...r,
+      suspended: r.suspended ?? false,
+      subscription:
+        r.id === "rest-copperleaf" && !r.subscription
+          ? { ...normaliseSubscription(null, r.createdAt), status: "comped" as const, note: "Dish360 demo café" }
+          : normaliseSubscription(r.subscription, r.createdAt),
+    }));
+    db.leads = (db.leads ?? []).map((l) => ({
+      ...l,
+      source: l.source ?? "demo",
+      status: l.status ?? "new",
+      city: l.city ?? "",
+      restaurantId: l.restaurantId ?? null,
+      requestedPlan: l.requestedPlan ?? null,
+      notes: l.notes ?? "",
+      updatedAt: l.updatedAt ?? l.createdAt,
+    }));
+    db.payments = db.payments ?? [];
+    db.assetJobs = db.assetJobs ?? jobsForReadyModels(db.dishes);
+    db.passwordResets = db.passwordResets ?? [];
+    db.version = 2;
+  }
+  db.settings = normaliseSettings(db.settings);
+  return db;
+}
 
 interface StoreState {
   /** Cached so a request doesn't re-read the file once per query. */
@@ -62,12 +99,18 @@ async function loadFromDisk(): Promise<Database> {
   try {
     const raw = await fs.readFile(DATA_FILE, "utf8");
     const parsed = JSON.parse(raw) as Database;
+    if (parsed.version < SCHEMA_VERSION) {
+      const upgraded = upgrade(parsed);
+      await persist(upgraded);
+      return upgraded;
+    }
     if (parsed.version !== SCHEMA_VERSION) {
       // Forward-only: unknown versions are reseeded rather than guessed at.
       const seeded = buildSeed();
       await persist(seeded);
       return seeded;
     }
+    parsed.settings = normaliseSettings(parsed.settings);
     return parsed;
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code;
@@ -92,7 +135,15 @@ export async function read(): Promise<Database> {
   refuseLocalStoreInProduction();
 
   const store = state();
-  if (store.cache) return store.cache;
+  if (store.cache) {
+    // A copy held in memory from before an upgrade (the dev server outlives
+    // code changes): bring it forward too, not just the file.
+    if (store.cache.version < SCHEMA_VERSION) {
+      upgrade(store.cache);
+      await persist(store.cache);
+    }
+    return store.cache;
+  }
 
   if (!store.loading) {
     store.loading = loadFromDisk()

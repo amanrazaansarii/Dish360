@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireAuth } from "@/lib/auth/session";
 import { listCategories, listDishes } from "@/lib/db";
 import { dishLimitReached } from "@/lib/plans";
+import { planFor } from "@/lib/platform";
 import DishForm from "@/components/app/DishForm";
 import { Lede, PageTitle } from "@/components/app/ui";
 import { formatMoney } from "@/lib/utils";
@@ -19,7 +20,7 @@ export default async function NewDishPage() {
   ]);
 
   // Don't show a form that cannot be submitted.
-  if (dishLimitReached(restaurant.plan, dishes.length)) redirect("/dashboard/settings#plan");
+  if (dishLimitReached(await planFor(restaurant.plan), dishes.length)) redirect("/dashboard/settings#plan");
 
   const symbol = formatMoney(0, restaurant.currency).replace(/[\d.,\s]/g, "") || "₹";
 

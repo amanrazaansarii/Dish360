@@ -17,12 +17,15 @@ export default function GuestDish({
   sectionName,
   reviews,
   table,
+  canOrder,
 }: {
   dish: Dish;
   restaurant: Restaurant;
   sectionName: string | null;
   reviews: Review[];
   table: string | null;
+  /** the plan includes ordering and the menu is live */
+  canOrder: boolean;
 }) {
   const [tab, setTab] = useState<"about" | "facts" | "reviews">("about");
 
@@ -145,7 +148,7 @@ export default function GuestDish({
                 </ButtonLink>
               ) : null}
 
-              <OrderToTable dish={dish} slug={restaurant.slug} table={table} />
+              {canOrder ? <OrderToTable dish={dish} slug={restaurant.slug} table={table} /> : null}
             </div>
 
             <div className="mt-9">

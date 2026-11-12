@@ -1,5 +1,9 @@
+import { normaliseSubscription } from "@/lib/plans";
 import type {
   AnalyticsEvent,
+  AssetJob,
+  PasswordReset,
+  Payment,
   Category,
   Dish,
   DishModel,
@@ -96,6 +100,13 @@ export function toRestaurant(row: Row): Restaurant {
           closed: false,
         })),
     published: bool(row.published),
+    suspended: bool(row.suspended),
+    subscription: normaliseSubscription(
+      row.subscription && typeof row.subscription === "object"
+        ? (row.subscription as Restaurant["subscription"])
+        : null,
+      iso(row.created_at),
+    ),
     createdAt: iso(row.created_at),
   };
 }
@@ -228,11 +239,61 @@ export function toReview(row: Row): Review {
 export function toLead(row: Row): Lead {
   return {
     id: str(row.id),
+    source: str(row.source, "demo") as Lead["source"],
+    status: str(row.status, "new") as Lead["status"],
     name: str(row.name),
     email: str(row.email),
     phone: str(row.phone),
     restaurantName: str(row.restaurant_name),
+    city: str(row.city),
     message: str(row.message),
+    restaurantId: strOrNull(row.restaurant_id),
+    requestedPlan: strOrNull(row.requested_plan) as Lead["requestedPlan"],
+    notes: str(row.notes),
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at ?? row.created_at),
+  };
+}
+
+export function toPayment(row: Row): Payment {
+  return {
+    id: str(row.id),
+    restaurantId: str(row.restaurant_id),
+    amountMinor: num(row.amount_minor),
+    currency: str(row.currency, "INR"),
+    method: str(row.method, "other") as Payment["method"],
+    reference: str(row.reference),
+    note: str(row.note),
+    periodStart: isoOrNull(row.period_start),
+    periodEnd: isoOrNull(row.period_end),
+    paidAt: iso(row.paid_at),
+    createdAt: iso(row.created_at),
+  };
+}
+
+export function toAssetJob(row: Row): AssetJob {
+  return {
+    id: str(row.id),
+    restaurantId: str(row.restaurant_id),
+    dishId: str(row.dish_id),
+    dishName: str(row.dish_name),
+    provider: str(row.provider, "built-in") as AssetJob["provider"],
+    outcome: str(row.outcome, "succeeded") as AssetJob["outcome"],
+    costMinor: num(row.cost_minor),
+    costCurrency: str(row.cost_currency, "USD"),
+    milliseconds: num(row.milliseconds),
+    error: strOrNull(row.error),
+    createdAt: iso(row.created_at),
+  };
+}
+
+export function toPasswordReset(row: Row): PasswordReset {
+  return {
+    id: str(row.id),
+    userId: str(row.user_id),
+    tokenHash: str(row.token_hash),
+    expiresAt: iso(row.expires_at),
+    usedAt: isoOrNull(row.used_at),
     createdAt: iso(row.created_at),
   };
 }
@@ -267,6 +328,8 @@ export function restaurantColumns(patch: Partial<Restaurant>): Row {
   if (patch.plan !== undefined) row.plan = patch.plan;
   if (patch.hours !== undefined) row.hours = patch.hours;
   if (patch.published !== undefined) row.published = patch.published;
+  if (patch.suspended !== undefined) row.suspended = patch.suspended;
+  if (patch.subscription !== undefined) row.subscription = patch.subscription;
   return row;
 }
 

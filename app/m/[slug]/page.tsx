@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRestaurantBySlug, listCategories, listDishes } from "@/lib/db";
-import { getPlan } from "@/lib/plans";
+import { guestAccess } from "@/lib/guest";
 import GuestMenu from "@/components/app/GuestMenu";
+import { MenuUnavailable, PreviewStrip } from "@/components/app/MenuGate";
 
 export async function generateMetadata({
   params,
@@ -33,8 +34,12 @@ export default async function GuestMenuPage({
   params: { slug: string };
   searchParams: { table?: string };
 }) {
-  const restaurant = await getRestaurantBySlug(params.slug);
-  if (!restaurant) notFound();
+  const found = await getRestaurantBySlug(params.slug);
+  if (!found) notFound();
+
+  const access = await guestAccess(found);
+  if (!access.ok) return <MenuUnavailable name={found.name} />;
+  const { restaurant, plan } = access;
 
   const [sections, dishes] = await Promise.all([
     listCategories(restaurant.id),
@@ -85,6 +90,7 @@ export default async function GuestMenuPage({
 
   return (
     <>
+      {access.preview ? <PreviewStrip reason={access.preview} /> : null}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -94,7 +100,7 @@ export default async function GuestMenuPage({
         sections={sections}
         dishes={dishes}
         table={searchParams.table ?? null}
-        showCredit={getPlan(restaurant.plan).showsDish360Credit}
+        showCredit={!plan.features.removeCredit}
       />
     </>
   );

@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { createOrder, getDish, getRestaurantBySlug, recordEvent } from "@/lib/db";
 import { deviceFromUserAgent } from "@/lib/utils";
+import { canOrder } from "@/lib/guest";
+import { planFor } from "@/lib/platform";
 
 /**
  * A guest ordering the dish they are looking at.
@@ -41,6 +43,15 @@ export async function POST(request: Request) {
 
   const restaurant = await getRestaurantBySlug(parsed.data.slug);
   if (!restaurant) return Response.json({ error: "Unknown menu." }, { status: 404 });
+
+  // Ordering is a plan feature, and only a live menu takes orders.
+  const plan = await planFor(restaurant.plan);
+  if (!canOrder(plan, restaurant)) {
+    return Response.json(
+      { error: "This menu is not taking orders here. Please order with a member of staff." },
+      { status: 403 },
+    );
+  }
 
   const items = [];
   let currency = restaurant.currency;

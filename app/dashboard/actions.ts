@@ -6,6 +6,7 @@ import { z } from "zod";
 import {
   codeAvailable,
   createCategory,
+  createLead,
   createDish,
   createTableCode,
   deleteCategory,
@@ -16,6 +17,8 @@ import {
   listDishes,
   listOrders,
   listTableCodes,
+  listAssetJobs,
+  recordAssetJob,
   recordEvent,
   reorderDishes,
   setModelApproved,
@@ -30,8 +33,9 @@ import {
 } from "@/lib/db";
 import { getAuth } from "@/lib/auth/session";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
-import { dishLimitReached, tableCodeLimitReached } from "@/lib/plans";
-import { convertDish } from "@/lib/ar/pipeline";
+import { buildLimitReached, dishLimitReached, tableCodeLimitReached } from "@/lib/plans";
+import { planFor, settings } from "@/lib/platform";
+import { activeProvider, convertDish } from "@/lib/ar/pipeline";
 import { parseMoney, slugify } from "@/lib/utils";
 import type { DietTag, Dish, ModelEnvironment, OrderStatus, PlanId } from "@/lib/types";
 
@@ -165,7 +169,7 @@ export async function createDishAction(
   if (!parsed.success) return { fieldErrors: fieldErrorsFrom(parsed.error) };
 
   const existing = await listDishes(restaurant.id);
-  const full = dishLimitReached(restaurant.plan, existing.length);
+  const full = dishLimitReached(await planFor(restaurant.plan), existing.length);
   if (full) return { error: full };
 
   const dish = await createDish({
@@ -254,10 +258,41 @@ export async function buildModelAction(
   const dish = await ownDish(dishId, restaurant.id);
   if (!dish) return { error: "That dish is not on your menu." };
 
+  // Builds are counted per calendar month, against the plan.
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const [plan, platform, thisMonth] = await Promise.all([
+    planFor(restaurant.plan),
+    settings(),
+    listAssetJobs({ restaurantId: restaurant.id, sinceIso: monthStart.toISOString() }),
+  ]);
+  const full = buildLimitReached(plan, thisMonth.filter((j) => j.outcome !== "failed").length);
+  if (full) return { error: full };
+
+  // Did this build go to the paid service? Then it is costed, even if the
+  // service failed and the built-in builder stepped in.
+  const paid = activeProvider() === "3daistudio" && !!dish.imageUrl;
+  const job = {
+    restaurantId: restaurant.id,
+    dishId,
+    dishName: dish.name,
+    costMinor: paid ? platform.apiCostPerBuildMinor : 0,
+    costCurrency: platform.apiCostCurrency,
+  };
+  const started = Date.now();
+
   await updateDishModel(dishId, { status: "building", error: null });
 
   try {
     const result = await convertDish(dish);
+    await recordAssetJob({
+      ...job,
+      provider: paid ? "3daistudio" : "built-in",
+      outcome: paid && result.provider !== "3daistudio" ? "fallback" : "succeeded",
+      milliseconds: Date.now() - started,
+      error: null,
+    });
     await updateDishModel(dishId, {
       status: "ready",
       provider: result.provider,
@@ -279,6 +314,13 @@ export async function buildModelAction(
   } catch (error) {
     const message = error instanceof Error ? error.message : "The build failed.";
     await updateDishModel(dishId, { status: "failed", error: message });
+    await recordAssetJob({
+      ...job,
+      provider: paid ? "3daistudio" : "built-in",
+      outcome: "failed",
+      milliseconds: Date.now() - started,
+      error: message,
+    });
     return { error: message };
   }
 
@@ -406,7 +448,7 @@ export async function createCodeAction(
   if (!parsed.success) return { fieldErrors: fieldErrorsFrom(parsed.error) };
 
   const existing = await listTableCodes(restaurant.id);
-  const full = tableCodeLimitReached(restaurant.plan, existing.length);
+  const full = tableCodeLimitReached(await planFor(restaurant.plan), existing.length);
   if (full) return { error: full };
 
   if (parsed.data.target === "dish" && parsed.data.targetDishId) {
@@ -416,7 +458,7 @@ export async function createCodeAction(
   }
 
   // Codes get typed off a printed card by staff, so keep them short and plain.
-  const prefix = (restaurant.slug.slice(0, 3) || "d36").toUpperCase();
+  const prefix = (restaurant.slug.replace(/[^a-z0-9]/gi, "").slice(0, 3) || "d36").toUpperCase();
   const stem = parsed.data.tableNumber
     ? `${prefix}-T${parsed.data.tableNumber.padStart(2, "0")}`
     : `${prefix}-${String(existing.length + 1).padStart(3, "0")}`;
@@ -455,10 +497,10 @@ export async function createCodeRunAction(
   if (wanted > 100) return { error: "Up to 100 at a time." };
 
   const existing = await listTableCodes(restaurant.id);
-  const full = tableCodeLimitReached(restaurant.plan, existing.length + wanted - 1);
+  const full = tableCodeLimitReached(await planFor(restaurant.plan), existing.length + wanted - 1);
   if (full) return { error: full };
 
-  const prefix = (restaurant.slug.slice(0, 3) || "d36").toUpperCase();
+  const prefix = (restaurant.slug.replace(/[^a-z0-9]/gi, "").slice(0, 3) || "d36").toUpperCase();
   let made = 0;
 
   for (let n = from; n <= to; n += 1) {
@@ -601,16 +643,29 @@ export async function updateHoursAction(formData: FormData): Promise<void> {
   revalidatePath(`/m/${restaurant.slug}`);
 }
 
-export async function changePlanAction(formData: FormData): Promise<void> {
-  const { restaurant } = await owner();
+/**
+ * An owner asking to change plan. It lands in the admin panel's inquiries,
+ * and Dish360 switches it there once the money side is agreed — an owner can
+ * not move themselves onto a paid plan.
+ */
+export async function requestPlanAction(formData: FormData): Promise<void> {
+  const { restaurant, user } = await owner();
   const plan = String(formData.get("plan") ?? "") as PlanId;
-  if (!["free", "pro", "enterprise"].includes(plan)) return;
+  if (!["free", "pro", "enterprise"].includes(plan) || plan === restaurant.plan) return;
 
-  // No payment provider is connected, so this simply applies the plan and its
-  // limits. Gate it behind a provider's webhook before charging anybody.
-  await updateRestaurant(restaurant.id, { plan });
+  const target = await planFor(plan);
+  await createLead({
+    source: "upgrade",
+    name: user.name,
+    email: user.email,
+    phone: restaurant.phone,
+    restaurantName: restaurant.name,
+    city: restaurant.city,
+    restaurantId: restaurant.id,
+    requestedPlan: plan,
+    message: `Asked from the dashboard to move from ${(await planFor(restaurant.plan)).name} to ${target.name}.`,
+  });
   revalidatePath("/dashboard/settings");
-  revalidatePath("/dashboard");
 }
 
 const profileSchema = z.object({

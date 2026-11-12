@@ -8,6 +8,7 @@ import {
   BarChart3,
   ExternalLink,
   LogOut,
+  ShieldCheck,
   Menu as MenuIcon,
   QrCode,
   Receipt,
@@ -16,9 +17,9 @@ import {
   X,
 } from "lucide-react";
 import { signOutAction } from "@/app/(account)/actions";
+import { stopActingAction } from "@/app/admin/actions";
 import { Tag } from "./ui";
-import { PLAN_LABELS, cn } from "@/lib/utils";
-import type { PlanId } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 /**
  * The frame around every dashboard screen.
@@ -41,10 +42,16 @@ export default function DashboardShell({
   user,
   place,
   waitingOrders,
+  admin,
+  acting,
   children,
 }: {
   user: { name: string; email: string };
-  place: { name: string; slug: string; plan: PlanId; published: boolean };
+  place: { name: string; slug: string; planName: string; published: boolean; suspended: boolean };
+  /** the user runs Dish360 itself */
+  admin: boolean;
+  /** ...and is working on somebody else's restaurant */
+  acting: boolean;
   waitingOrders: number;
   children: React.ReactNode;
 }) {
@@ -95,6 +102,15 @@ export default function DashboardShell({
 
   const foot = (
     <div className="flex flex-col gap-3 border-t border-white/[0.06] pt-4">
+      {admin ? (
+        <Link
+          href="/admin"
+          className="flex items-center gap-2 rounded-xl bg-sage/[0.1] px-3.5 py-2.5 text-[13px] font-semibold text-sage transition-colors hover:bg-sage/[0.16]"
+        >
+          <ShieldCheck className="h-3.5 w-3.5" />
+          Dish360 admin
+        </Link>
+      ) : null}
       <Link
         href={`/m/${place.slug}`}
         target="_blank"
@@ -138,10 +154,14 @@ export default function DashboardShell({
         <div className="rounded-2xl bg-white/[0.03] px-3.5 py-3">
           <p className="truncate text-[13.5px] font-semibold text-ink">{place.name}</p>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <Tag tone="sage">{PLAN_LABELS[place.plan]}</Tag>
-            <Tag tone={place.published ? "neutral" : "amber"}>
-              {place.published ? "Live" : "Not published"}
-            </Tag>
+            <Tag tone="sage">{place.planName}</Tag>
+            {place.suspended ? (
+              <Tag tone="danger">Suspended</Tag>
+            ) : (
+              <Tag tone={place.published ? "neutral" : "amber"}>
+                {place.published ? "Live" : "Not published"}
+              </Tag>
+            )}
           </div>
         </div>
 
@@ -180,6 +200,23 @@ export default function DashboardShell({
           </div>
         ) : null}
 
+        {acting ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-amber-400/[0.14] px-4 py-2.5 text-[12.5px] text-amber-100 sm:px-7 lg:px-9">
+            <span>
+              Working on <b className="font-semibold">{place.name}</b> as Dish360 admin. Changes here are real.
+            </span>
+            <form action={stopActingAction}>
+              <button type="submit" className="font-semibold text-amber-50 underline-offset-2 hover:underline">
+                Back to the admin panel
+              </button>
+            </form>
+          </div>
+        ) : null}
+        {place.suspended && !acting ? (
+          <div className="bg-red-500/[0.14] px-4 py-2.5 text-[12.5px] text-red-100 sm:px-7 lg:px-9">
+            Dish360 has switched this menu off, so guests cannot open it. Your work is all still here. Get in touch with us to turn it back on.
+          </div>
+        ) : null}
         <main className="px-4 py-7 sm:px-7 lg:px-9 lg:py-9">{children}</main>
       </div>
     </div>

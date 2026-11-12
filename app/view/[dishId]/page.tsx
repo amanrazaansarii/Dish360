@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getDish, getRestaurant } from "@/lib/db";
 import { isLiveInAr } from "@/lib/dish";
 import ArView from "@/components/app/ArView";
+import { MenuUnavailable, PreviewStrip } from "@/components/app/MenuGate";
+import { canOrder, guestAccess } from "@/lib/guest";
 
 export async function generateMetadata({
   params,
@@ -32,18 +34,26 @@ export default async function ViewPage({
   // Nothing unreleased reaches a guest, even by a guessed link.
   if (!isLiveInAr(dish)) notFound();
 
-  const restaurant = await getRestaurant(dish.restaurantId);
-  if (!restaurant) notFound();
+  const found = await getRestaurant(dish.restaurantId);
+  if (!found) notFound();
+
+  const access = await guestAccess(found);
+  if (!access.ok) return <MenuUnavailable name={found.name} />;
+  const { restaurant, plan } = access;
 
   return (
-    <ArView
-      dish={dish}
-      restaurant={{
-        name: restaurant.name,
-        slug: restaurant.slug,
-        brandColor: restaurant.brandColor,
-      }}
-      table={searchParams.table ?? null}
-    />
+    <>
+      {access.preview ? <PreviewStrip reason={access.preview} /> : null}
+      <ArView
+        dish={dish}
+        restaurant={{
+          name: restaurant.name,
+          slug: restaurant.slug,
+          brandColor: restaurant.brandColor,
+        }}
+        table={searchParams.table ?? null}
+        canOrder={canOrder(plan, restaurant)}
+      />
+    </>
   );
 }

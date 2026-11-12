@@ -8,6 +8,7 @@ import { providerStatus } from "@/lib/ar/pipeline";
 import { dishStatusLabel } from "@/lib/dish";
 import DishForm from "@/components/app/DishForm";
 import ThreeDPanel from "@/components/app/ThreeDPanel";
+import { planFor } from "@/lib/platform";
 import { Eyebrow, PageTitle, Tag } from "@/components/app/ui";
 import { formatMoney } from "@/lib/utils";
 
@@ -76,7 +77,11 @@ export default async function DishPage({
         </p>
       ) : null}
 
-      <ThreeDPanel dish={dish} provider={providerStatus()} />
+      <ThreeDPanel
+        dish={dish}
+        provider={providerStatus()}
+        canDownload={(await planFor(restaurant.plan)).features.modelDownloads}
+      />
 
       <DishForm dish={dish} sections={sections} currencySymbol={symbol} />
     </div>

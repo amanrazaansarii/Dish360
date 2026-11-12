@@ -23,10 +23,13 @@ export default function ArView({
   dish,
   restaurant,
   table,
+  canOrder,
 }: {
   dish: Dish;
   restaurant: { name: string; slug: string; brandColor: string };
   table: string | null;
+  /** the plan includes ordering and the menu is live */
+  canOrder: boolean;
 }) {
   const [facts, setFacts] = useState(true);
   const [arState, setArState] = useState<"unknown" | "ready" | "none" | "failed">(
@@ -235,7 +238,7 @@ export default function ArView({
               </p>
             ) : null}
 
-            <OrderToTable dish={dish} slug={restaurant.slug} table={table} />
+            {canOrder ? <OrderToTable dish={dish} slug={restaurant.slug} table={table} /> : null}
           </div>
         </div>
       </div>

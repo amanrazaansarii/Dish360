@@ -5,13 +5,23 @@ import { z } from "zod";
 import {
   createRestaurant,
   createUser,
+  deleteSessionsForUser,
+  findPasswordReset,
   findUserByEmail,
+  findUserById,
+  getRestaurant,
   queueMail,
   slugAvailable,
+  updateRestaurant,
+  updateUser,
+  usePasswordReset,
 } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { endSession, startSession } from "@/lib/auth/session";
+import { hashToken, issueResetLink } from "@/lib/auth/reset";
+import { startingSubscription } from "@/lib/plans";
 import { slugify } from "@/lib/utils";
+import type { User } from "@/lib/types";
 
 /**
  * Signing in and creating an account.
@@ -37,6 +47,68 @@ function fieldErrorsFrom(error: z.ZodError): Record<string, string> {
 }
 
 /* -------------------------------------------------------------- sign in --- */
+
+async function freeSlug(name: string): Promise<string> {
+  const base = slugify(name) || "menu";
+  let slug = base;
+  let suffix = 2;
+  while (!(await slugAvailable(slug))) {
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+  return slug;
+}
+
+/**
+ * The platform admin's account, made on first sign-in if it is not there.
+ *
+ * Its email and password hash come from the host's environment
+ * (DISH360_ADMIN_EMAIL, DISH360_ADMIN_PASSWORD_HASH), so the same login works
+ * on a laptop and on a fresh deployment with an empty database. Returns the
+ * account when these credentials are the admin's, otherwise null and the
+ * normal sign-in carries on.
+ *
+ * The environment's password always opens the admin account, even after it is
+ * changed in Settings: it is the way back in.
+ */
+async function platformAdminSignIn(email: string, password: string): Promise<User | null> {
+  const adminEmail = process.env.DISH360_ADMIN_EMAIL?.trim().toLowerCase();
+  const adminHash = process.env.DISH360_ADMIN_PASSWORD_HASH?.trim();
+  if (!adminEmail || !adminHash || email.trim().toLowerCase() !== adminEmail) return null;
+  if (!(await verifyPassword(password, adminHash))) return null;
+
+  const existing = await findUserByEmail(adminEmail);
+  if (existing) return existing;
+
+  // A local store seeded before the admin was configured: take over the sample
+  // café's login, so one account runs the admin panel and the demo café.
+  const sample = await findUserByEmail("owner@copperleaf.test");
+  if (sample) {
+    const cafe = await getRestaurant(sample.restaurantId);
+    if (cafe && cafe.subscription.status !== "comped") {
+      await updateRestaurant(cafe.id, {
+        subscription: { ...cafe.subscription, status: "comped", note: "Dish360 demo café" },
+      });
+    }
+    return updateUser(sample.id, { email: adminEmail, passwordHash: adminHash, name: "Dish360 admin" });
+  }
+
+  // An empty database (a new deployment): give the admin a demo café of their own.
+  const restaurant = await createRestaurant({
+    name: "Dish360 Demo Café",
+    slug: await freeSlug("dish360-demo"),
+    plan: "enterprise",
+    published: false,
+    subscription: { ...startingSubscription({ status: "comped" }), note: "Dish360 demo café" },
+  });
+  return createUser({
+    email: adminEmail,
+    name: "Dish360 admin",
+    passwordHash: adminHash,
+    restaurantId: restaurant.id,
+    role: "owner",
+  });
+}
 
 const signInSchema = z.object({
   email: z.string().trim().min(1, "Enter your email").email("That does not look like an email"),
@@ -64,9 +136,10 @@ export async function signInAction(
     values: { email: raw.email },
   };
 
-  const user = await findUserByEmail(parsed.data.email);
+  const admin = await platformAdminSignIn(parsed.data.email, parsed.data.password);
+  const user = admin ?? (await findUserByEmail(parsed.data.email));
   if (!user) return noMatch;
-  if (!(await verifyPassword(parsed.data.password, user.passwordHash))) return noMatch;
+  if (!admin && !(await verifyPassword(parsed.data.password, user.passwordHash))) return noMatch;
 
   await startSession(user.id);
 
@@ -118,20 +191,18 @@ export async function signUpAction(
 
   // The slug becomes a public web address, so a clash gets a number rather
   // than an error the owner has to solve.
-  const base = slugify(parsed.data.restaurantName) || "menu";
-  let slug = base;
-  let suffix = 2;
-  while (!(await slugAvailable(slug))) {
-    slug = `${base}-${suffix}`;
-    suffix += 1;
-  }
+  const slug = await freeSlug(parsed.data.restaurantName);
 
+  // Everyone starts on Starter, which is free, so there is nothing to trial:
+  // the subscription is simply active. A paid plan is agreed with Dish360 and
+  // set from the admin panel.
   const restaurant = await createRestaurant({
     name: parsed.data.restaurantName,
     slug,
     city: parsed.data.city,
     plan: "free",
     published: false,
+    subscription: startingSubscription({ status: "active" }),
   });
 
   const user = await createUser({
@@ -182,24 +253,42 @@ export async function forgotPasswordAction(
 
   const user = await findUserByEmail(parsed.data.email);
   if (user) {
-    // Nothing is sent until an email provider is connected; the message waits
-    // in the outbox, which the owner can read under Settings.
-    await queueMail({
-      to: user.email,
-      subject: "Reset your Dish360 password",
-      body: [
-        `Hello ${user.name},`,
-        "",
-        "Somebody asked to reset the password on your Dish360 account.",
-        "",
-        "Email is not connected on this deployment yet, so no link was sent.",
-        "Connect an email provider and this becomes a real reset link.",
-        "",
-        "— Dish360",
-      ].join("\n"),
-    });
+    // A real, single-use link. Until an email provider is connected it waits
+    // in the outbox, which Dish360 support can read in the admin panel and
+    // pass on.
+    await issueResetLink(user, "asked");
   }
 
   // Same answer whether or not the address exists.
   return { done: parsed.data.email };
+}
+
+/* -------------------------------------------------------- set a new one --- */
+
+export async function resetPasswordAction(
+  _previous: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const token = String(formData.get("token") ?? "");
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+
+  if (password.length < 8) return { fieldErrors: { password: "Use at least 8 characters" } };
+  if (password.length > 200) return { fieldErrors: { password: "That is too long" } };
+  if (password !== confirm) return { fieldErrors: { confirm: "The two passwords are different" } };
+
+  const expired: FormState = {
+    error: "This link has expired or has already been used. Ask for a new one.",
+  };
+  const reset = token ? await findPasswordReset(hashToken(token)) : null;
+  if (!reset) return expired;
+  const user = await findUserById(reset.userId);
+  if (!user) return expired;
+  if (!(await usePasswordReset(reset.id))) return expired;
+
+  await updateUser(user.id, { passwordHash: await hashPassword(password) });
+  // Anyone who was signed in with the old password is signed out.
+  await deleteSessionsForUser(user.id);
+  await startSession(user.id);
+  redirect("/dashboard?reset=1");
 }

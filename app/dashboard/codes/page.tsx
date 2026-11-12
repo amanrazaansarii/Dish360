@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { requireAuth } from "@/lib/auth/session";
 import { listDishes, listTableCodes } from "@/lib/db";
-import { getPlan } from "@/lib/plans";
+import { planFor } from "@/lib/platform";
 import { isLiveInAr } from "@/lib/dish";
 import { Eyebrow, Lede, PageTitle } from "@/components/app/ui";
 import CodesManager from "./CodesManager";
@@ -27,7 +27,7 @@ export default async function CodesPage({
   const scheme = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
   const origin = process.env.NEXT_PUBLIC_SITE_URL ?? `${scheme}://${host}`;
 
-  const plan = getPlan(restaurant.plan);
+  const plan = await planFor(restaurant.plan);
 
   return (
     <div className="flex flex-col gap-7">
