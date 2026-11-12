@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Dish360 · how it works, from your kitchen to their table</title>
 <meta name="description" content="Dish360 turns photos of your dishes into 3D. Guests scan a code on the table and the food appears in front of them through their phone camera. No app to download.">
-<link rel="icon" href="/home/assets/logo.png">
+<link rel="icon" href="/home/assets/dish360-mark.svg" type="image/svg+xml">
+<link rel="alternate icon" href="/home/assets/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -29,8 +30,15 @@
   .bar-actions { display: flex; align-items: center; gap: 12px; }
   .bar-signin { color: var(--sc-ink-soft); text-decoration: none; font: 500 0.9rem/1 var(--sc-font-text); white-space: nowrap; transition: color 160ms var(--sc-ease-out); }
   .bar-signin:hover { color: var(--sc-ink); }
-  .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em; }
-  .logo img { width: 34px; height: 34px; border-radius: 50%; background: #e9e5dc; }
+  .logo { display: flex; align-items: center; text-decoration: none; border-radius: 10px; }
+  .logo:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 4px; }
+  .lockup { display: block; height: 36px; width: auto; aspect-ratio: 142 / 40; overflow: visible; }
+  .lockup__name { font: 800 23px/1 var(--sc-font-text, "Plus Jakarta Sans", system-ui, sans-serif); letter-spacing: -0.03em; fill: var(--sc-ink); }
+  .lockup__num { fill: var(--sc-accent); }
+
+  /* ------------------------------------------- the phone dock (bottom) */
+  .dock { display: none; }
+  .vh-probe { position: fixed; top: 0; left: 0; width: 0; height: 100vh; height: 100svh; visibility: hidden; pointer-events: none; }
   .track-wrap { position: relative; margin: 0 auto; width: min(100%, 640px); }
   .track { position: relative; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); }
   .track__line { position: absolute; left: 10%; right: 10%; top: 9px; height: 2px; border-radius: 2px; background: rgba(255,255,255,0.1); }
@@ -43,7 +51,6 @@
   .track button[aria-current="step"] { color: var(--sc-ink); }
   .track button[aria-current="step"] i { box-shadow: inset 0 0 0 2px var(--sc-accent), 0 0 0 5px rgba(170,208,175,0.14); }
   @media (hover: hover) and (pointer: fine) { .track button:hover { color: var(--sc-ink); } }
-  .track-now { display: none; }
 
   /* ------------------------------------------------------------------ hero */
   .hero { position: relative; min-height: 100svh; padding-top: var(--bar); display: grid; align-items: center; overflow: clip; }
@@ -97,16 +104,19 @@
   .cam-photo { position: absolute; inset: 0; }
   .cam-photo svg { position: absolute; top: 50%; left: 50%; width: 190%; height: auto; translate: -50% -50%; }
   .cam-guide { position: absolute; inset: 22% 10% 30%; border-radius: 10px; box-shadow: 0 0 0 1px rgba(255,255,255,0.35); }
-  .cam-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  /* A warm white, not pure #fff: a phone flash on a dark plate reads warm, and
+     it is gentler on the eye when it fills a phone screen. */
+  .cam-flash { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 70% at 50% 45%, #fffdf8 0%, #fbf6ec 60%, #efe7d8 100%); opacity: 0; pointer-events: none; will-change: opacity; }
   .cam-shutter { position: absolute; left: 50%; bottom: 20px; translate: -50% 0; width: 54px; height: 54px; border-radius: 50%; box-shadow: inset 0 0 0 3px rgba(255,255,255,0.85); display: grid; place-items: center; }
-  .cam-shutter::after { content: ""; width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.9); }
+  .cam-shutter i { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.9); }
   .checks { position: absolute; right: 7%; top: 50%; translate: 0 -50%; list-style: none; margin: 0; padding: 16px 18px; display: grid; gap: 10px; border-radius: 16px; background: rgba(30,34,38,0.7); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: var(--d360-shadow), var(--d360-edge); font-size: 0.9rem; }
   .checks li { display: flex; align-items: center; gap: 10px; opacity: 0.35; transition: opacity 260ms var(--sc-ease-out); }
   .checks li.is-on { opacity: 1; }
   .checks li i { width: 18px; height: 18px; border-radius: 50%; background: var(--sc-accent); display: grid; place-items: center; }
   .checks li i::after { content: ""; width: 7px; height: 4px; border: solid #131313; border-width: 0 0 2px 2px; transform: rotate(-45deg) translate(1px, -1px); }
   .toast { position: absolute; left: 50%; bottom: 7%; translate: -50% 0; padding: 10px 16px; border-radius: 999px; background: var(--d360-sage); color: #131313; font-weight: 600; font-size: 0.9rem; white-space: nowrap; opacity: 0; transform: translateY(8px); transition: opacity 240ms var(--sc-ease-out), transform 240ms var(--sc-ease-out); }
-  .toast.is-on { opacity: 1; transform: none; }
+  /* "sent" lands after the flash has peaked, not on top of it */
+  .toast.is-on { opacity: 1; transform: none; transition-duration: 360ms; transition-delay: 260ms; }
   /* scene 2: 3D */
   .s2 { display: grid; grid-template-rows: minmax(0, 1fr) auto; width: 100%; height: 100%; padding: 56px 20px 24px; }
   .s2 .model { position: relative; }
@@ -205,13 +215,34 @@
 
   /* --------------------------------------------------------------- phones */
   @media (max-width: 900px) {
-    :root { --bar: 60px; }
-    .bar .wrap { grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; }
-    .logo span { display: none; }
-    .track-wrap { display: none; }
-    .track-now { display: block; font-size: 0.8rem; color: var(--sc-ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
-    .track-now b { color: var(--sc-ink); font-weight: 600; }
+    :root { --bar: 60px; --dock: 56px; --dock-gap: 10px; }
+    /* brand on the left, the demo button on the right, nothing between */
+    .bar .wrap { grid-template-columns: auto auto; justify-content: space-between; gap: 12px; }
+    .bar nav { display: none; }
+    .lockup { height: 32px; }
     .bar .btn-sage { padding: 10px 14px; font-size: 0.85rem; }
+
+    /* where you are in the walkthrough, at the thumb's end of the screen */
+    .dock { display: grid; grid-template-columns: auto minmax(0, 1fr) 44px; align-items: center; gap: 12px;
+      position: fixed; z-index: 60; left: 12px; right: 12px; bottom: calc(var(--dock-gap) + env(safe-area-inset-bottom, 0px));
+      height: var(--dock); padding: 0 6px 0 16px; border-radius: 16px; overflow: hidden;
+      background: rgba(24,26,29,0.96); box-shadow: 0 12px 32px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.06);
+      transition: transform 420ms var(--sc-ease-out), opacity 300ms var(--sc-ease-out); }
+    .dock.is-away { transform: translateY(calc(100% + var(--dock-gap) + 12px)); opacity: 0; pointer-events: none; }
+    .dock__line { position: absolute; left: 0; right: 0; top: 0; height: 2px; background: rgba(255,255,255,0.06); }
+    .dock__line i { position: absolute; inset: 0; background: var(--sc-accent); transform-origin: 0 50%; transform: scaleX(0); }
+    .dock__dots { list-style: none; margin: 0; padding: 0; display: flex; gap: 5px; }
+    .dock__dots li { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.16); transition: background 240ms var(--sc-ease-out), transform 240ms var(--sc-ease-out); }
+    .dock__dots li.is-done { background: var(--d360-sage); }
+    .dock__dots li.is-on { background: var(--sc-accent); transform: scale(1.3); }
+    .dock__now { margin: 0; font-size: 0.86rem; line-height: 1.25; color: var(--sc-ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dock__now b { color: var(--sc-ink); font-weight: 600; }
+    .dock__next { width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 12px; background: rgba(170,208,175,0.14); color: var(--sc-accent); transition: background 160ms var(--sc-ease-out), transform 160ms var(--sc-ease-out); }
+    .dock__next:active { transform: scale(0.94); background: rgba(170,208,175,0.24); }
+    .dock__next:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
+    .dock__next svg { width: 18px; height: 18px; }
+    /* the footer is never left under the dock */
+    .foot { padding-bottom: calc(32px + var(--dock) + var(--dock-gap) + env(safe-area-inset-bottom, 0px)); }
     .bar-signin { display: none; }  /* the bar is already tight here */
     .bar-actions { gap: 0; }
     .hero .wrap { grid-template-columns: 1fr; padding-top: 28px; padding-bottom: 28px; }
@@ -225,6 +256,8 @@
     .step h3 { font-size: 1.7rem; }
     .phone { height: 88%; }
     .checks { right: 4%; padding: 10px 12px; font-size: 0.78rem; gap: 6px; }
+    /* sits just above the shutter instead of on top of it */
+    .toast { bottom: calc(6% + 84px); }
     .s2 { padding: 44px 12px 14px; }
     .stages li { padding: 6px 10px; font-size: 0.76rem; }
     .s5 { grid-template-columns: 1fr; padding: 44px 12px 12px; gap: 12px; }
@@ -243,6 +276,7 @@
   @media (prefers-reduced-motion: reduce) {
     .scene, .scene.is-on { transform: none; }
     .step { transition: none; }
+    .dock, .toast.is-on { transition-duration: 0s; transition-delay: 0s; }
   }
 </style>
 </head>
@@ -252,10 +286,29 @@
 
 <header class="bar">
   <div class="wrap">
-    <a class="logo" href="#top"><img src="/home/assets/logo.png" alt="" width="34" height="34"><span>Dish360</span></a>
+    <a class="logo" href="#top" aria-label="Dish360, back to the top">
+      <!-- The brand lockup, drawn rather than a picture: a cloche with an orbit
+           round it (one turn is the 360), then the name. Same mark as
+           /home/assets/dish360-mark.svg. -->
+      <svg class="lockup" viewBox="0 0 142 40" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="lkC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1ede4"/><stop offset="1" stop-color="#c9c2b3"/></linearGradient>
+        </defs>
+        <g fill="url(#lkC)">
+          <circle cx="20" cy="10.3" r="2"/>
+          <rect x="19.1" y="11.6" width="1.8" height="1.6" rx=".4"/>
+          <path d="M8 25.6C8 17.9 13.4 12.8 20 12.8S32 17.9 32 25.6Z"/>
+          <rect x="6.4" y="24.9" width="27.2" height="2.8" rx="1.4"/>
+        </g>
+        <path d="M11.6 22.4C11.9 18.9 14 16.2 17 15.1" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M4.03 24.95A17 6 0 0 0 18.2 32.97" fill="none" stroke="#e9e5dc" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M17.6 29.9 23 32.95 17.6 36Z" fill="#e9e5dc" stroke="#e9e5dc" stroke-width=".8" stroke-linejoin="round"/>
+        <path d="M27.98 32.3A17 6 0 0 0 36.63 25.75" fill="none" stroke="#aad0af" stroke-width="2.4" stroke-linecap="round"/>
+        <text x="47" y="27.6" textLength="93" lengthAdjust="spacingAndGlyphs" class="lockup__name">Dish<tspan class="lockup__num">360</tspan></text>
+      </svg>
+    </a>
     <nav aria-label="How it works, step by step">
       <div class="track-wrap"><span class="track__line" aria-hidden="true"><i id="trackFill"></i></span><ol class="track" id="track"></ol></div>
-      <p class="track-now" id="trackNow" aria-live="polite">How it works</p>
     </nav>
     <div class="bar-actions">
       <a class="bar-signin" href="/signin">Sign in</a>
@@ -263,6 +316,19 @@
     </div>
   </div>
 </header>
+
+<!-- Phones only: where the walkthrough is, at the bottom of the screen, so the
+     top bar can carry the brand. Hidden on wider screens, where the tracker in
+     the top bar does this job. -->
+<nav class="dock" id="dock" aria-label="How it works, where you are">
+  <span class="dock__line" aria-hidden="true"><i id="dockFill"></i></span>
+  <ol class="dock__dots" id="dockDots" aria-hidden="true"><li></li><li></li><li></li><li></li><li></li></ol>
+  <p class="dock__now" id="trackNow" aria-live="polite">How it works</p>
+  <button class="dock__next" type="button" id="dockNext" aria-label="Go to step 1">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4v12M5 11l5 5 5-5"/></svg>
+  </button>
+</nav>
+<div class="vh-probe" id="vhProbe" aria-hidden="true"></div>
 
 <main id="top">
 
@@ -347,7 +413,7 @@
                 <div class="phone__screen">
                   <div class="cam-photo" id="camPhoto"></div>
                   <div class="cam-guide"></div>
-                  <div class="cam-shutter"></div>
+                  <div class="cam-shutter"><i id="camButton"></i></div>
                   <div class="cam-flash" id="camFlash"></div>
                 </div>
               </div>
@@ -567,19 +633,42 @@
   var blocks = Array.prototype.slice.call(document.querySelectorAll(".step"));
   var scenes = document.querySelectorAll(".scene");
   var mobile = matchMedia("(max-width: 900px)");
+
+  // The reading line has to come from a height that does not change while you
+  // scroll. On phones innerHeight grows and shrinks as the address bar hides
+  // and shows, which moved the line by ~50px mid-scroll and made every scene
+  // lurch. The probe is 100svh: the small viewport, which stays put.
+  var probe = $("vhProbe");
+  function viewH() { return probe.clientHeight || innerHeight; }
+
+  function goToStep(i) {
+    var el = blocks[i];
+    var top = el.getBoundingClientRect().top + scrollY, vh = viewH();
+    var line = mobile.matches ? vh * 0.52 : vh * 0.5;
+    scrollTo({ top: Math.round(top + el.offsetHeight * 0.45 - line + (mobile.matches ? vh * 0.1 : 0)), behavior: reduce ? "auto" : "smooth" });
+  }
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-step]");
-    if (!b) return;
-    var el = blocks[+b.getAttribute("data-step")];
-    var top = el.getBoundingClientRect().top + scrollY;
-    var line = mobile.matches ? innerHeight * 0.52 : innerHeight * 0.5;
-    scrollTo({ top: Math.round(top + el.offsetHeight * 0.45 - line + (mobile.matches ? innerHeight * 0.1 : 0)), behavior: reduce ? "auto" : "smooth" });
+    if (b) goToStep(+b.getAttribute("data-step"));
   });
 
-  /* ------------------------------------------------------------ the walk */
-  var active = -1, last = "";
-  function render() {
-    var vh = innerHeight;
+  /* ------------------------------------------------------------ the walk
+
+     Scroll gives a target; what is drawn eases towards it. Tying the pictures
+     straight to scrollY looked fine with a mouse wheel but stepped on phones,
+     where one flick can move the page 200px between two frames. Now each
+     frame closes a fixed share of the gap (time based, so it is the same at
+     60Hz and 120Hz), and the loop only runs while something is still moving.
+
+     Each frame also does all of its layout reads first and its writes after,
+     so the browser lays the page out once per frame instead of twice. */
+  var TAU_S = 0.12;                                   // seconds to close ~63% of the gap
+  var shown = [0, 0, 0, 0, 0], shownP = 0, primed = false;
+  var active = -1, last = "", nowHTML = "", away = null, flashed = false;
+  var dockDots = $("dockDots").children, dockNext = $("dockNext"), dock = $("dock");
+
+  function measure() {
+    var vh = viewH();
     // on phones the picture sits on top, so the reading line is lower down
     var line = mobile.matches ? vh * 0.7 : vh * 0.5;
     var idx = 0, local = [];
@@ -589,16 +678,60 @@
       if (r.top <= line) idx = i;
     });
     var first = blocks[0].getBoundingClientRect(), lastB = blocks[4].getBoundingClientRect();
-    var started = first.top <= line;
-    walkP = clamp01((line - first.top) / (lastB.bottom - first.top));
+    return {
+      idx: idx, local: local, line: line,
+      started: first.top <= line,
+      // past the walk: the last step has gone up behind the picture
+      done: lastB.bottom < vh * 0.45,
+      p: clamp01((line - first.top) / (lastB.bottom - first.top)),
+      stageTop: $("stage").getBoundingClientRect().top
+    };
+  }
+
+  // The shutter: a press, then a flash that rises fast and fades slowly, the
+  // way a real one looks. It is a timed animation fired once when the reader
+  // reaches the moment, so its speed no longer depends on how fast they flick.
+  function takePhoto() {
+    if (reduce || !$("camFlash").animate) return;
+    $("camFlash").animate([
+      { opacity: 0, easing: "cubic-bezier(0.3, 0, 0.2, 1)" },
+      { opacity: 0.82, offset: 0.14, easing: "cubic-bezier(0.22, 0.61, 0.36, 1)" },
+      { opacity: 0 }
+    ], { duration: 820 });
+    $("camButton").animate([
+      { transform: "scale(1)", easing: "cubic-bezier(0.3, 0, 0.2, 1)" },
+      { transform: "scale(0.8)", offset: 0.35, easing: "cubic-bezier(0.22, 0.61, 0.36, 1)" },
+      { transform: "scale(1)" }
+    ], { duration: 420 });
+  }
+
+  function paint(m) {
+    var idx = m.idx, started = m.started, l = shown, walk = shownP;
+    walkP = walk;
 
     // tracker: line fills continuously; a stop is ticked once its step is half read
-    $("trackFill").style.transform = "scaleX(" + walkP.toFixed(4) + ")";
+    $("trackFill").style.transform = "scaleX(" + walk.toFixed(4) + ")";
+    $("dockFill").style.transform = "scaleX(" + walk.toFixed(4) + ")";
     trackBtns.forEach(function (b, i) {
-      b.classList.toggle("is-done", started && (i < idx || (i === idx && local[i] > 0.55)));
+      b.classList.toggle("is-done", started && (i < idx || (i === idx && m.local[i] > 0.55)));
       if (started && i === idx) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current");
     });
-    $("trackNow").innerHTML = started ? "Step <b>" + (idx + 1) + " of 5</b> · " + NAMES[idx] : "How it works";
+    for (var d = 0; d < 5; d++) {
+      dockDots[d].classList.toggle("is-on", started && d === idx);
+      dockDots[d].classList.toggle("is-done", started && d < idx);
+    }
+    var html = started ? "<b>Step " + (idx + 1) + " of 5</b> · " + NAMES[idx] : "<b>How it works</b> · 5 steps";
+    if (html !== nowHTML) {
+      $("trackNow").innerHTML = nowHTML = html;
+      var next = started ? idx + 1 : 0;
+      if (next > 4) { dockNext.hidden = true; }
+      else {
+        dockNext.hidden = false;
+        dockNext.setAttribute("data-step", next);
+        dockNext.setAttribute("aria-label", "Go to step " + (next + 1) + ", " + NAMES[next]);
+      }
+    }
+    if (m.done !== away) { dock.classList.toggle("is-away", m.done); away = m.done; if (m.done) dock.setAttribute("inert", ""); else dock.removeAttribute("inert"); }
 
     if (idx !== active) {
       scenes.forEach(function (s, i) {
@@ -612,14 +745,14 @@
     if (!started) blocks[0].classList.add("is-on");
 
     // 1: the photo is framed, checked, taken, sent
-    var l1 = local[0];
+    var l1 = l[0];
     $("checks").querySelectorAll("li").forEach(function (li, i) { li.classList.toggle("is-on", l1 > 0.12 + i * 0.12); });
-    var flash = l1 > 0.5 && l1 < 0.62 ? 1 - (l1 - 0.5) / 0.12 : 0;
-    $("camFlash").style.opacity = (flash * 0.85).toFixed(3);
-    $("sentToast").classList.toggle("is-on", l1 >= 0.6);
+    if (l1 >= 0.5 && !flashed) { flashed = true; if (idx === 0) takePhoto(); }
+    else if (l1 < 0.4) flashed = false;               // scroll back up and it can be taken again
+    $("sentToast").classList.toggle("is-on", l1 >= 0.56);
 
     // 2: shape, then colour, then approved
-    var l2 = local[1], mesh = seg(l2, 0.08, 0.42), tex = seg(l2, 0.42, 0.72);
+    var l2 = l[1], mesh = seg(l2, 0.08, 0.42), tex = seg(l2, 0.42, 0.72);
     mBuild.set({ mesh: mesh, texture: tex, yaw: 25 + seg(l2, 0.7, 1) * 120, pitch: 26 });
     var stage = l2 >= 0.75 ? 3 : tex > 0 ? 2 : mesh > 0 ? 1 : 0;
     $("stages").querySelectorAll("li").forEach(function (li, i) {
@@ -628,33 +761,50 @@
     });
 
     // 3: the table code prints in
-    var reveal = seg(local[2], 0.05, 0.55);
+    var reveal = seg(l[2], 0.05, 0.55);
     qrTable.reveal(reveal);
 
     // 4: the table is found, the dish lands
-    var l4 = local[3], drop = ease(seg(l4, 0.2, 0.55)), locked = l4 >= 0.55;
+    var l4 = l[3], drop = ease(seg(l4, 0.2, 0.55)), locked = l4 >= 0.55;
     mGuest.set({ mesh: 1, texture: 1, lift: -(1 - drop) * 70, yaw: 30 + l4 * 100, pitch: 26, scale: 0.92 });
     var ins = locked ? 24 : 8 + seg(l4, 0, 0.55) * 16;
     [["bTL", "top", "left"], ["bTR", "top", "right"], ["bBL", "bottom", "left"], ["bBR", "bottom", "right"]].forEach(function (b) {
       var el = $(b[0]);
-      el.style[b[1]] = (b[1] === "top" ? ins + 6 : ins + 8) + "%";
-      el.style[b[2]] = ins * 0.7 + "%";
+      el.style[b[1]] = (b[1] === "top" ? ins + 6 : ins + 8).toFixed(2) + "%";
+      el.style[b[2]] = (ins * 0.7).toFixed(2) + "%";
       el.style.borderColor = locked ? "var(--sc-accent)" : "rgba(170,208,175,0.6)";
     });
     $("arPill").textContent = locked ? "On your table" : "Looking for the table";
 
-    var state = [idx, l1 >= 0.6 ? 1 : 0, Math.round(mesh * 100), Math.round(tex * 100), stage, reveal.toFixed(2),
-      drop.toFixed(2), locked ? 1 : 0, walkP.toFixed(2),
+    var state = [idx, l1 >= 0.56 ? 1 : 0, Math.round(mesh * 100), Math.round(tex * 100), stage, reveal.toFixed(2),
+      drop.toFixed(2), locked ? 1 : 0, walk.toFixed(2),
       // where the picture actually is on screen: it slides in and out around the steps
-      Math.round($("stage").getBoundingClientRect().top / 16)].join("|");
+      Math.round(m.stageTop / 16)].join("|");
     if (state !== last) { $("stage").setAttribute("data-sc-verify-state", state); last = state; }
   }
 
-  var ticking = false;
-  function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(function () { render(); ticking = false; }); } }
-  addEventListener("scroll", onScroll, { passive: true });
-  addEventListener("resize", onScroll, { passive: true });
-  render();
+  var running = false, prevT = 0;
+  function frame(now) {
+    var m = measure();                                 // reads
+    var dt = prevT ? Math.min(0.064, (now - prevT) / 1000) : 1 / 60;
+    prevT = now;
+    var k = reduce || !primed ? 1 : 1 - Math.exp(-dt / TAU_S);
+    primed = true;
+    var moving = false;
+    for (var i = 0; i < 5; i++) {
+      var gap = m.local[i] - shown[i];
+      if (Math.abs(gap) < 0.0006) shown[i] = m.local[i]; else { shown[i] += gap * k; moving = true; }
+    }
+    var gp = m.p - shownP;
+    if (Math.abs(gp) < 0.0006) shownP = m.p; else { shownP += gp * k; moving = true; }
+    paint(m);                                          // writes
+    if (moving) requestAnimationFrame(frame);
+    else { running = false; prevT = 0; }
+  }
+  function kick() { if (!running) { running = true; requestAnimationFrame(frame); } }
+  addEventListener("scroll", kick, { passive: true });
+  addEventListener("resize", kick, { passive: true });
+  kick();
 })();
 </script>
 </body>
